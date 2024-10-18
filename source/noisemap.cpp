@@ -34,15 +34,16 @@ int main(int argc, char* argv[])
   int totalstep = ceil(log((NL/2-1)/sigma)/dN), count = 0;
   // std::vector<std::vector<double>> noisedata(totalstep, std::vector<double>(NL*NL*NL,0));
   
-// #ifdef _OPENMP
-// #pragma omp parallel for
-// #endif
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i=0; i<totalstep; i++) {
     std::vector<double> noisedatalist = dwlist(i*dN);
-// #ifdef _OPENMP
-// #pragma omp critical
-// #endif
+#ifdef _OPENMP
+#pragma omp critical
+#endif
     {
+      ofs << i << ' ';
       for (size_t n=0; n<noisedatalist.size(); n++) {
         ofs << noisedatalist[n] << ' ';
       }
