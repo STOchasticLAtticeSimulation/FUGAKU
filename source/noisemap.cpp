@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  std::ofstream ofs(noisefilename + std::string(argv[1]) + std::string(".dat"));
+  std::ofstream ofs(noisefilename + std::string(argv[1]) + std::string(".dat"));//, std::ios::app);
   if (ofs.fail()) {
     std::cout << "The noise file couldn't be opened. 'mkdir noisedata'" << std::endl;
     return -1;
@@ -32,36 +32,35 @@ int main(int argc, char* argv[])
   std::cout << "Box size : " << NL << std::endl;
   
   int totalstep = ceil(log((NL/2-1)/sigma)/dN), count = 0;
-  // std::vector<std::vector<double>> noisedata(totalstep, std::vector<double>(NL*NL*NL,0));
-  
+  int divnumber = 10;
+  int divstep = int(totalstep/divnumber);
+  int modstep = int(totalstep%divnumber);
+  for (int l=0; l<divnumber+1; l++) {
+    std::vector<std::vector<double>> noisedata(divstep, std::vector<double>(NL*NL*NL,0));
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-  for (int i=0; i<totalstep; i++) {
-    std::vector<double> noisedatalist = dwlist(i*dN);
+    for (int i=0; i<divstep; i++) {
+      if (l<divnumber || i<modstep) noisedata[i] = dwlist((i+l*divstep)*dN);
 #ifdef _OPENMP
 #pragma omp critical
 #endif
-    {
-      ofs << i << ' ';
-      for (size_t n=0; n<noisedatalist.size(); n++) {
-        ofs << noisedatalist[n] << ' ';
+      {
+        count++;
+        // std::cout << "\rNoiseGenerating : " << std::setw(3) << 100*count/totalstep << "%" << std::flush;
       }
-      ofs << std::endl;
-      count++;
-      std::cout << "\rNoiseGenerating : " << std::setw(3) << 100*count/totalstep << "%" << std::flush;
     }
-  }
-  std::cout << std::endl;
+    // std::cout << std::endl;
   
-  // for (size_t i=0; i<noisedata[0].size(); i++) {
-  //   for (size_t n=0; n<noisedata.size(); n++) {
-  //     ofs << noisedata[i][n] << ' ';
-  //   }
-  //   ofs << std::endl;
-  //   std::cout << "\rExporting : " << std::setw(3) << 100*i/noisedata[0].size() << "%" << std::flush;
-  // }
-  // std::cout << "\rExporting : 100%" << std::endl;
+    for (size_t n=0; n<noisedata.size(); n++) {
+      for (size_t i=0; i<noisedata[0].size(); i++) {
+        if (l<divnumber || n<modstep) ofs << noisedata[n][i] << ' ';
+      }
+      if (l<divnumber || n<modstep) ofs << std::endl;
+      std::cout << "\rExporting : " << std::setw(3) << 100*n/noisedata[0].size() << "%" << std::flush;
+    }
+    std::cout << "\rExporting : 100%" << std::endl;
+  }
 
   // ---------- stop timer ----------
   gettimeofday(&Nv, &Nz);
