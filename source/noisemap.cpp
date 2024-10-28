@@ -31,12 +31,14 @@ int main(int argc, char* argv[])
 
   std::cout << "Box size : " << NL << std::endl;
   
-  int totalstep = ceil(log((NL/2-1)/sigma)/dN), count = 0;
+  int totalstep = ceil(log((NL/2-1)/sigma)/dN); //, count = 0;
   int divnumber = 10;
   int divstep = int(totalstep/divnumber);
   int modstep = int(totalstep%divnumber);
   for (int l=0; l<divnumber+1; l++) {
     std::vector<std::vector<double>> noisedata(divstep, std::vector<double>(NL*NL*NL,0));
+    int count = 0;
+    
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -47,17 +49,17 @@ int main(int argc, char* argv[])
 #endif
       {
         count++;
-        // std::cout << "\rNoiseGenerating : " << std::setw(3) << 100*count/totalstep << "%" << std::flush;
+        std::cout << "\rNoiseGenerating : " << std::setw(3) << 100*count/divstep << "%" << std::flush;
       }
     }
-    // std::cout << std::endl;
+    std::cout << std::endl;
   
     for (size_t n=0; n<noisedata.size(); n++) {
-      for (size_t i=0; i<noisedata[0].size(); i++) {
+      for (size_t i=0; i<noisedata[0].size()-1; i++) {
         if (l<divnumber || n<modstep) ofs << noisedata[n][i] << ' ';
       }
-      if (l<divnumber || n<modstep) ofs << std::endl;
-      std::cout << "\rExporting : " << std::setw(3) << 100*n/noisedata[0].size() << "%" << std::flush;
+      if (l<divnumber || n<modstep) ofs << noisedata[n][noisedata[0].size()-1] << std::endl;
+      std::cout << "\rExporting : " << std::setw(3) << 100*n/noisedata.size() << "%" << std::flush;
     }
     std::cout << "\rExporting : 100%" << std::endl;
   }
