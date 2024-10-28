@@ -104,6 +104,6 @@ def external_sort(input_file, output_file):
     print(f"time: {elapsed_time:.2f}sec.")
 
 # 実行例
-input_file = 'noisedata/noisemap_3.dat'
-output_file = 'noisedata/sorted_data_3.dat'
+input_file = 'noisedata/noisemap_0.dat'
+output_file = 'noisedata/sorted_data_0.dat'
 external_sort(input_file, output_file)
