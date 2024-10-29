@@ -27,31 +27,37 @@ int main()
   std::cout << "Box size : " << NL << std::endl;
   
   int totalstep = ceil(log((NL/2-1)/sigma)/dN), count = 0;
-  std::vector<std::vector<double>> biasdata(totalstep, std::vector<double>(NL*NL*NL,0));
+  // std::vector<std::vector<double>> biasdata(totalstep, std::vector<double>(NL*NL*NL,0));
+  int divnumber = 10;
+  int divstep = int(totalstep/divnumber);
+  int modstep = int(totalstep%divnumber);
+  for (int l=0; l<divnumber+1; l++) {
+    std::vector<std::vector<double>> biasdata(divstep, std::vector<double>(NL*NL*NL,0));
   
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-  for (int i=0; i<totalstep; i++) {
-    biasdata[i] = biaslist(i*dN);
+    for (int i=0; i<divstep; i++) {
+      if (l<divnumber || i<modstep) biasdata[i] = biaslist(i*dN);
 #ifdef _OPENMP
 #pragma omp critical
 #endif
-    {
-      count++;
-      std::cout << "\rBiasGenerating : " << std::setw(3) << 100*count/totalstep << "%" << std::flush;
+      {
+        count++;
+        // std::cout << "\rBiasGenerating : " << std::setw(3) << 100*count/totalstep << "%" << std::flush;
+      }
     }
-  }
-  std::cout << std::endl;
-  
-  for (size_t i=0; i<biasdata[0].size(); i++) {
+    // std::cout << std::endl;
+    
     for (size_t n=0; n<biasdata.size(); n++) {
-      ofs << biasdata[n][i] << ' ';
+      for (size_t i=0; i<biasdata[0].size(); i++) {
+        if (l<divnumber || n<modstep) ofs << biasdata[n][i] << ' ';
+      }
+      if (l<divnumber || n<modstep) ofs << std::endl;
+      // std::cout << "\rExporting : " << std::setw(3) << 100*i/biasdata[0].size() << "%" << std::flush;
     }
-    ofs << std::endl;
-    std::cout << "\rExporting : " << std::setw(3) << 100*i/biasdata[0].size() << "%" << std::flush;
+    // std::cout << "\rExporting : 100%" << std::endl;
   }
-  std::cout << "\rExporting : 100%" << std::endl;
 
   // ---------- stop timer ----------
   gettimeofday(&Nv, &Nz);
