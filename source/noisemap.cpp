@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
 #endif
       {
         count++;
-        std::cout << "\rNoiseGenerating : " << std::setw(3) << 100*count/divstep << "%" << std::flush;
+	std::cout << "\rNoiseGenerating : " << std::setw(3) << 100*count/divstep << "%" << std::flush;
       }
     }
     std::cout << std::endl;

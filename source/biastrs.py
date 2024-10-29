@@ -4,11 +4,6 @@ import math
 import time
 import sys
 
-args = sys.argv
-if len(args) != 2:
-    print("Specify the noise file number correctly.")
-    sys.exit(1)
-
 # 実行時間の開始時間を記録
 start_time = time.time()
 
@@ -25,17 +20,17 @@ num_chunks = 2**4
 chunk_size = int(cols / num_chunks)
 
 # 2. メモリマップを使用して元データを読み込む
-input_file = f'noisedata/noisemap_{args[1]}.bin'
+input_file = f'biasdata/biasmap.bin'
 
 if not(os.path.exists(input_file)):
-    print("The noise file couldn't be opened.")
+    print("The bias file couldn't be opened.")
     sys.exit(1)
 
 input_array = np.memmap(input_file, dtype=dtype, mode='r', shape=(rows, cols))
 
 # 各チャンクを転置してファイルに保存
 for chunk in range(num_chunks):
-    output_file = f'noisedata/noisetrs_{args[1]}_{chunk}.bin'
+    output_file = f'biasdata/biastrs_{chunk}.bin'
 
     # 列範囲を計算（最後のチャンクは列数に満たない場合がある）
     start_col = chunk * chunk_size
