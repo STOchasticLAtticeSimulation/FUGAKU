@@ -6,7 +6,7 @@
 // Parameters of STOLAS
 const double sigma = 0.1; // ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
 const double dn = 1; // Thickness of nsigma sphere shell
-const int NL = pow(2,6); // Box size L
+const int NL = pow(2,8); // Box size L
 const double dN = 0.01; // e-folds step
 const double Nprec = 1e-7; // Precision of e-foldings
 const double dlogn = 0.1; // Width of bin in power spectrum
