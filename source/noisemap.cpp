@@ -9,8 +9,8 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  std::ofstream ofs(noisefilename + std::string(argv[1]) + //std::string(".dat")
-		    std::string(".bin"), std::ios::out | std::ios::binary);//, std::ios::app);
+  std::ofstream ofs(noisefilename + std::string(argv[1]) + std::string(".dat"));
+  //std::string(".bin"), std::ios::out | std::ios::binary);//, std::ios::app);
   if (ofs.fail()) {
     std::cout << "The noise file couldn't be opened. 'mkdir noisedata'" << std::endl;
     return -1;
@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
   std::cout << "Box size : " << NL << std::endl;
   
   int totalstep = ceil(log((NL/2-1)/sigma)/dN); //, count = 0;
-  int divnumber = 10;
+  //int divnumber = 10;
   int divstep = int(totalstep/divnumber);
   int modstep = int(totalstep%divnumber);
   
@@ -62,17 +62,16 @@ int main(int argc, char* argv[])
     std::cout << std::endl;
 
     for (size_t n=0; n<noisedata.size(); n++) {
-      /*
       for (size_t i=0; i<noisedata[0].size()-1; i++) {
         if (l<divnumber || n<modstep) ofs << noisedata[n][i] << ' ';
       }
       if (l<divnumber || n<modstep) ofs << noisedata[n][noisedata[0].size()-1] << std::endl;
-      */
-      ofs.write(reinterpret_cast<const char*>(noisedata[n].data()), noisedata[n].size()*sizeof(double));
       
-      std::cout << "\rExporting : " << std::setw(3) << 100*n/noisedata.size() << "%" << std::flush;
+      //ofs.write(reinterpret_cast<const char*>(noisedata[n].data()), noisedata[n].size()*sizeof(double));
+      
+      std::cout << "\rExporting :       " << std::setw(3) << 100*n/noisedata.size() << "%" << std::flush;
     }
-    std::cout << "\rExporting : 100%" << std::endl;
+    std::cout << "\rExporting :       100%" << std::endl;
     
   }
 
