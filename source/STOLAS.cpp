@@ -26,10 +26,14 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
   noisefilefail = noisefile.fail();
   biasfile.open(sourcedir + std::string("/") + biasfilename);
   biasfilefail = biasfile.fail();
+
+  int totalstep = ceil(log((NL/2-1)/sigma)/dN);
+  noisedata = std::vector<std::vector<double>>(NL*NL*NL/div, std::vector<double>(totalstep,0));
+  biasdata = std::vector<std::vector<double>>(NL*NL*NL/div, std::vector<double>(totalstep,0));
   
   if (!noisefile.fail() && !biasfile.fail()) {
     std::cout << "model : " << model << std::endl;
-    
+
     std::string str;
     double dd;
     while (std::getline(noisefile, str)) {
@@ -54,6 +58,11 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
       biasdata.push_back(vv);
     }
 
+    for (size_t i = 0; i < NL*NL*NL/div; i++) {
+      noisefile.read(reinterpret_cast<char*>(noisedata[i].data()), totalstep * sizeof(double));
+      biasfile.read(reinterpret_cast<char*>(biasdata[i].data()), totalstep * sizeof(double));
+    }
+    
     NL = cbrt(noisedata.size());
     std::cout << "Noise/Bias data imported. Box size is " << NL << "." << std::endl;
     Nfile.open(Nfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));

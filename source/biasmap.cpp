@@ -32,7 +32,13 @@ int main()
   int divstep = int(totalstep/divnumber);
   int modstep = int(totalstep%divnumber);
   for (int l=0; l<divnumber+1; l++) {
-    std::vector<std::vector<double>> biasdata(divstep, std::vector<double>(NL*NL*NL,0));
+    std::vector<std::vector<double>> biasdata;
+    if (l<divnumber) {
+      biasdata = std::vector<std::vector<double>>(divstep, std::vector<double>(NL*NL*NL,0));
+    } else {
+      biasdata = std::vector<std::vector<double>>(modstep, std::vector<double>(NL*NL*NL,0));
+    }
+    int count = 0;
   
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -44,19 +50,21 @@ int main()
 #endif
       {
         count++;
-        // std::cout << "\rBiasGenerating : " << std::setw(3) << 100*count/totalstep << "%" << std::flush;
+	std::cout << "\rBiasGenerating : " << std::setw(3) << 100*count/divstep << "%" << std::flush;
       }
     }
-    // std::cout << std::endl;
+    std::cout << std::endl;
     
     for (size_t n=0; n<biasdata.size(); n++) {
       for (size_t i=0; i<biasdata[0].size(); i++) {
         if (l<divnumber || n<modstep) ofs << biasdata[n][i] << ' ';
       }
       if (l<divnumber || n<modstep) ofs << std::endl;
-      // std::cout << "\rExporting : " << std::setw(3) << 100*i/biasdata[0].size() << "%" << std::flush;
+
+      //ofs.write(reinterpret_cast<const char*>(biasdata[n].data()), biasdata[n].size()*sizeof(double));
+      std::cout << "\rExporting :      " << std::setw(3) << 100*n/biasdata.size() << "%" << std::flush;
     }
-    // std::cout << "\rExporting : 100%" << std::endl;
+    std::cout << "\rExporting :      100%" << std::endl;
   }
 
   // ---------- stop timer ----------
