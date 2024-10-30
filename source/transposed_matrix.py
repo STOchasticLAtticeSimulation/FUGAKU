@@ -6,9 +6,12 @@ start_time=time.time()
 #directory
 #input_file_path='/data/STOLAS/Exercise/source/noisedata/noisemap_0.dat'
 #output_dir='/data/STOLAS/Exercise/FUGAKU/practice_matrix'
-input_file_path='noisedata/noisemap_256.dat'
-output_dir='noisedata/noisetrs_256/'
-num_chunk = 16
+#input_file_path='noisedata/noisemap_64.dat'
+#output_dir='noisedata/noisetrs_64/'
+input_file_path='biasdata/biasmap.dat'
+output_dir='biasdata/biastrs/'
+#num_chunk = 16
+num_chunk = 1
 
 
 if not os.path.exists(output_dir):
