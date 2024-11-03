@@ -6,7 +6,7 @@
 #define LOOP for(int i = 0; i < NL; i++) for(int j = 0; j < NL; j++) for(int k = 0; k < NL; k++)
 
 
-STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int NoisefileNo, std::vector<double> Phii, double Bias, double NBias, double DNbias) {
+STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int NoisefileDirNo, std::vector<double> Phii, double Bias, double NBias, double DNbias, int NoisefileNo) {
 
 #ifdef _OPENMP
   std::cout << "OpenMP : Enabled (Max # of threads = " << omp_get_max_threads() << ")" << std::endl;
@@ -14,17 +14,18 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
   
   model = Model;
   dN = DN;
-  noisefileNo = NoisefileNo;
+  noisefiledirNo = NoisefileDirNo;
   phii = Phii;
   bias = Bias;
   Nbias = NBias;
   dNbias = DNbias;
+  noisefileNo = NoisefileNo;
 
   std::cout << "Noise file No. : " << noisefileNo << std::endl;
 
-  noisefile.open(sourcedir + std::string("/") + noisefilename + std::to_string(noisefileNo) + std::string(".dat"));
+  noisefile.open(sourcedir + std::string("/") + noisefiledir + std::to_string(noisefiledirNo) + noisefilename + std::to_string(noisefileNo) + std::string(".dat"));
   noisefilefail = noisefile.fail();
-  biasfile.open(sourcedir + std::string("/") + biasfilename);
+  biasfile.open(sourcedir + std::string("/") + biasfilename + std::to_string(noisefileNo) + std::string(".dat"));
   biasfilefail = biasfile.fail();
 
   /*
@@ -66,10 +67,12 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
       biasfile.read(reinterpret_cast<char*>(biasdata[i].data()), totalstep * sizeof(double));
     }
     */
-    
+   
+    // std::cout << cbrt(noisedata.size()) << std::endl;
     NL = cbrt(noisedata.size());
     std::cout << "Noise/Bias data imported. Box size is " << NL << "." << std::endl;
-    Nfile.open(Nfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
+    // Nfile.open(Nfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
+    Nfile.open(Noiseprefix + std::to_string(NoisefileDirNo) + Nfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
 
     Hdata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL*NL*NL,0));
     pidata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL*NL*NL,0));
@@ -96,7 +99,7 @@ bool STOLAS::Nfilefail() {
 }
 
 
-void STOLAS::dNmap() {
+void STOLAS::dNmap(int NoiseNo) {
   Nfile << std::setprecision(10);
   int complete = 0;
   
@@ -148,7 +151,7 @@ void STOLAS::dNmap() {
 #endif
     {
       Ndata[i] = N;
-      Nfile << i << ' ' << N << std::endl;
+      Nfile << i + NL*NL*NL*NoiseNo << ' ' << N << std::endl;
       complete++;
       std::cout << "\rLatticeSimulation : " << std::setw(3) << 100*complete/NL/NL/NL << "%" << std::flush;
     }

@@ -23,7 +23,9 @@
 class STOLAS
 {
 protected:
-  const std::string Nfileprefix = sdatadir + "/Nmap_";
+  // const std::string Nfileprefix = sdatadir + "/Nmap_";
+  const std::string Noiseprefix = sdatadir + "/Nmap_";
+  const std::string Nfileprefix = "/Nmap_";
   const std::string Hfileprefix = sdatadir + "/H_";
   const std::string pifileprefix = sdatadir + "/pi_";
   const std::string powfileprefix = sdatadir + "/power_";
@@ -33,7 +35,7 @@ protected:
   bool noisefilefail, biasfilefail;
 
   std::string model;
-  int NL, noisefileNo;
+  int NL, noisefiledirNo, noisefileNo;
   double dN, bias, Nbias, dNbias;
   std::ifstream noisefile, biasfile;
   std::ofstream Nfile, Hfile, pifile, powfile, cmpfile, prbfile, powsfile;
@@ -44,7 +46,7 @@ protected:
 
 public:
   STOLAS(){}
-  STOLAS(std::string Model, double DN, std::string sourcedir, int NoisefileNo, std::vector<double> Phii, double Bias, double NBias, double DNbias);
+  STOLAS(std::string Model, double DN, std::string sourcedir, int NoisefileDirNo, std::vector<double> Phii, double Bias, double NBias, double DNbias, int NoisefileNo);
 
   bool checknoisefile();
   bool checkbiasfile();
@@ -55,7 +57,7 @@ public:
   double Vp(double phi);
   bool EoI(std::vector<double> &phi);
  
-  void dNmap();
+  void dNmap(int noisefileNo);
   void animation();
   void spectrum();
   void compaction();
