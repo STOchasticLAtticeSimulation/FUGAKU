@@ -13,7 +13,7 @@ if len(args) != 2:
 start_time = time.time()
 
 # 1. 行列のサイズやデータ型を設定します
-NL = 2**6
+NL = 2**8
 dN = 0.01
 sigma = 0.1
 
@@ -26,16 +26,20 @@ chunk_size = int(cols / num_chunks)
 
 # 2. メモリマップを使用して元データを読み込む
 input_file = f'noisedata/noisemap_{args[1]}.bin'
+output_dir = f'noisedata/noisetrs_{args[1]}/'
 
 if not(os.path.exists(input_file)):
     print("The noise file couldn't be opened.")
     sys.exit(1)
 
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
 input_array = np.memmap(input_file, dtype=dtype, mode='r', shape=(rows, cols))
 
 # 各チャンクを転置してファイルに保存
 for chunk in range(num_chunks):
-    output_file = f'noisedata/noisetrs_{args[1]}_{chunk}.bin'
+    output_file = f'{output_dir}part_{chunk}.bin'
 
     # 列範囲を計算（最後のチャンクは列数に満たない場合がある）
     start_col = chunk * chunk_size
