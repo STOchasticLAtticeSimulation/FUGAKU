@@ -28,7 +28,6 @@ int main()
   
   int totalstep = ceil(log((NL/2-1)/sigma)/dN), count = 0;
   // std::vector<std::vector<double>> biasdata(totalstep, std::vector<double>(NL*NL*NL,0));
-  int divnumber = 10;
   int divstep = int(totalstep/divnumber);
   int modstep = int(totalstep%divnumber);
   for (int l=0; l<divnumber+1; l++) {

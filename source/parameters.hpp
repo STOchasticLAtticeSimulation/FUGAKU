@@ -27,10 +27,10 @@ const bool sanimation = false; // Output the animation
 // Directory name of saved data, you can change after "make clean" in your terminal.
 const std::string sdatadir = "data";
 const std::string sourcedir = "../source";
-// const std::string noisefilename = "noisedata/noisemap_";
-// const std::string biasfilename = "biasdata//biasmap.dat";
+const std::string noisefilename = "noisedata/noisemap_";
+const std::string biasfilename = "biasdata//biasmap.dat";
 const std::string noisefiledir = "noisedata/noisetrs_";
-const std::string noisefilename = "/part_";
-const std::string biasfilename = "biasdata/biastrs/part_";
+const std::string noisefilenamediv = "/part_";
+const std::string biasfilenamediv = "biasdata/biastrs/part_";
 
 #endif

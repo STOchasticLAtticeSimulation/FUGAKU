@@ -23,9 +23,9 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
 
   std::cout << "Noise file No. : " << noisefileNo << std::endl;
 
-  noisefile.open(sourcedir + std::string("/") + noisefiledir + std::to_string(noisefiledirNo) + noisefilename + std::to_string(noisefileNo) + std::string(".dat"));
+  noisefile.open(sourcedir + std::string("/") + noisefiledir + std::to_string(noisefiledirNo) + noisefilenamediv + std::to_string(noisefileNo) + std::string(".dat"));
   noisefilefail = noisefile.fail();
-  biasfile.open(sourcedir + std::string("/") + biasfilename + std::to_string(noisefileNo) + std::string(".dat"));
+  biasfile.open(sourcedir + std::string("/") + biasfilenamediv + std::to_string(noisefileNo) + std::string(".dat"));
   biasfilefail = biasfile.fail();
 
   /*
