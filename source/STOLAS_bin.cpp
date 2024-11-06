@@ -20,14 +20,15 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
   Nbias = NBias;
   dNbias = DNbias;
   noisefileNo = NoisefileNo;
-  Nn = NL;//cbrt(NL*NL*NL/totalnoiseNo); // Noise map size
+  // NL = NL;//cbrt(NL*NL*NL/totalnoiseNo); // Noise map size
 
   std::cout << "Noise file No. : " << noisefileNo << std::endl;
 
 //   noisefile.open(sourcedir + std::string("/") + noisefiledir + std::to_string(noisefiledirNo) + noisefilenamediv + std::to_string(noisefileNo) + std::string(".bin"));
   noisefile.open(sourcedir + std::string("/") + noisefiledir + std::to_string(noisefiledirNo) + noisefilenamediv + std::to_string(noisefileNo) + std::string(".bin"), std::ios::binary);
   noisefilefail = noisefile.fail();
-  biasfile.open(sourcedir + std::string("/") + biasfilenamediv + std::to_string(noisefileNo) + std::string(".dat"));
+  // biasfile.open(sourcedir + std::string("/") + biasfilenamediv + std::to_string(noisefileNo) + std::string(".dat"));
+  biasfile.open(sourcedir + std::string("/") + biasfilenamediv + std::to_string(noisefileNo) + std::string(".bin"), std::ios::binary);
   biasfilefail = biasfile.fail();
 
   /*
@@ -64,17 +65,28 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
       noisedata.push_back(vv);
     }
 
-    while (std::getline(biasfile, str)) {
-      std::vector<double> vv;
-      std::stringstream ss(str);
-      while (!ss.eof()) {
-	ss >> dd;
-	vv.push_back(dd);
+  //   while (std::getline(biasfile, str)) {
+  //     std::vector<double> vv;
+  //     std::stringstream ss(str);
+  //     while (!ss.eof()) {
+	// ss >> dd;
+	// vv.push_back(dd);
+  //     }
+  //     vv.pop_back();
+  //     biasdata.push_back(vv);
+  //   }
+
+    while (true) {
+      std::vector<double> vv(numElementsPerRow);
+      biasfile.read(reinterpret_cast<char*>(vv.data()), numElementsPerRow * sizeof(double));
+
+      // EOFに到達して完全に読み込まれなかった場合を確認
+      if (biasfile.gcount() != numElementsPerRow * sizeof(double)) {
+        break; // 全行の読み込み完了または不完全な行をスキップ
       }
-      vv.pop_back();
       biasdata.push_back(vv);
     }
-    std::cout << "The box sizes. " << noisedata.size() << ' ' << biasdata.size() << ' ' << Nn << std::endl;
+    std::cout << "The box sizes. " << noisedata.size() << ' ' << biasdata.size() << ' ' << NL << std::endl;
 
     /*
     for (size_t i = 0; i < NL*NL*NL/div; i++) {
@@ -84,15 +96,15 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
     */
    
     // NL = pow(2,5);//cbrt(noisedata.size());
-    std::cout << "Noise/Bias data imported. Box size is " << Nn << "." << std::endl;
+    std::cout << "Noise/Bias data imported. Box size is " << NL << "." << std::endl;
     // Nfile.open(Nfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
     // Nfile.open(Noiseprefix + std::to_string(NoisefileDirNo) + Nfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
-    Nfile.open(Noiseprefix + std::to_string(Nn) + std::string("_") + std::to_string(NoisefileDirNo) + std::string(".dat"), std::ios::app);
+    Nfile.open(Noiseprefix + std::to_string(NL) + std::string("_") + std::to_string(NoisefileDirNo) + std::string(".dat"), std::ios::app);
 
-    Hdata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(Nn*Nn*Nn,0));
-    pidata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(Nn*Nn*Nn,0));
-    Ndata = std::vector<double>(Nn*Nn*Nn,0);
-    Nmap3D = std::vector<std::vector<std::vector<std::complex<double>>>>(Nn, std::vector<std::vector<std::complex<double>>>(Nn, std::vector<std::complex<double>>(Nn, 0)));
+    Hdata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL*NL*NL,0));
+    pidata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL*NL*NL,0));
+    Ndata = std::vector<double>(NL*NL*NL,0);
+    Nmap3D = std::vector<std::vector<std::vector<std::complex<double>>>>(NL, std::vector<std::vector<std::complex<double>>>(NL, std::vector<std::complex<double>>(NL, 0)));
   }
 }
 
