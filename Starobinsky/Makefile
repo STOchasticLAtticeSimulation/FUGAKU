@@ -12,11 +12,11 @@ CXXFLAGS := -std=c++11 -O2 -Xpreprocessor -fopenmp -lomp
 LDFLAGS := -L/opt/homebrew/opt/libomp/lib
 CPPFLAGS := -I/opt/homebrew/opt/libomp/include
 
-$(MODEL): $(MODEL).o $(SOURCE)/STOLAS.o
-	$(CXX) $(LDFLAGS) $(CPPFLAGS) $(CXXFLAGS) -o $(MODEL) $(MODEL).o $(SOURCE)/STOLAS.o
+$(MODEL): $(MODEL).o $(SOURCE)/STOLAS_bin.o
+	$(CXX) $(LDFLAGS) $(CPPFLAGS) $(CXXFLAGS) -o $(MODEL) $(MODEL).o $(SOURCE)/STOLAS_bin.o
 
 $(MODEL).o: $(SOURCE)/STOLAS.hpp $(SOURCE)/parameters.hpp
-STOLAS.o: $(SOURCE)/STOLAS.hpp $(SOURCE)/parameters.hpp $(SOURCE)/vec_op.hpp
+STOLAS_bin.o: $(SOURCE)/STOLAS.hpp $(SOURCE)/parameters.hpp $(SOURCE)/vec_op.hpp
 
 clean:
 	$(RM) *.o

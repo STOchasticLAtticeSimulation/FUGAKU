@@ -35,7 +35,7 @@ protected:
   bool noisefilefail, biasfilefail;
 
   std::string model;
-  int NL, noisefiledirNo, noisefileNo;
+  int Nn, noisefiledirNo, noisefileNo;
   double dN, bias, Nbias, dNbias;
   std::ifstream noisefile, biasfile;
   std::ofstream Nfile, Hfile, pifile, powfile, cmpfile, prbfile, powsfile;
