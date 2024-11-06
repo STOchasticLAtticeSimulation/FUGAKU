@@ -10,7 +10,7 @@ CXXFLAGS := -std=c++11 -O2 -Xpreprocessor -fopenmp -lomp
 #CXXFLAGS := -std=c++11 -O2 -qopenmp
 
 LDFLAGS := -L/opt/homebrew/opt/libomp/lib
-#CPPFLAGS := -I/opt/homebrew/opt/libomp/include
+CPPFLAGS := -I/opt/homebrew/opt/libomp/include
 
 $(MODEL): $(MODEL).o $(SOURCE)/STOLAS.o
 	$(CXX) $(LDFLAGS) $(CPPFLAGS) $(CXXFLAGS) -o $(MODEL) $(MODEL).o $(SOURCE)/STOLAS.o

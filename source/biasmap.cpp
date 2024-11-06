@@ -43,7 +43,7 @@ int main()
 #pragma omp parallel for
 #endif
     for (int i=0; i<divstep; i++) {
-      if (l<divnumber || i<modstep) biasdata[i] = biaslist(i*dN);
+      if (l<divnumber || i<modstep) biasdata[i] = biaslist((i+l*divstep)*dN);
 #ifdef _OPENMP
 #pragma omp critical
 #endif
