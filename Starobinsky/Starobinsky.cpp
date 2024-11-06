@@ -90,6 +90,12 @@ int main(int argc, char* argv[])
   // --------------------------------------
 
   int noisefiledirNo = atoi(argv[1]);
+
+  // file initialize
+  std::ofstream Ninitfile(sdatadir + "/Nmap_" + std::to_string(NLnoise) + std::string("_") + std::to_string(noisefiledirNo) + std::string(".dat"));
+  std::ofstream logwinitfile(sdatadir + "/logw_" + std::to_string(NLnoise) + std::string("_") + std::to_string(noisefiledirNo) + std::string(".dat"));
+  Ninitfile.close();
+  logwinitfile.close();
   
   for (int noiseNo = 0; noiseNo < totalnoiseNo; noiseNo++)
   {
@@ -116,6 +122,7 @@ int main(int argc, char* argv[])
     }
 
     if(szeta) stolas.dNmap(noiseNo);
+    stolas.weight(noiseNo);
   }
 
 

@@ -23,8 +23,8 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
   // NL = NL;//cbrt(NL*NL*NL/totalnoiseNo); // Noise map size
 
   std::cout << "Noise file No. : " << noisefileNo << std::endl;
-
-//   noisefile.open(sourcedir + std::string("/") + noisefiledir + std::to_string(noisefiledirNo) + noisefilenamediv + std::to_string(noisefileNo) + std::string(".bin"));
+  
+  // noisefile.open(sourcedir + std::string("/") + noisefiledir + std::to_string(noisefiledirNo) + noisefilenamediv + std::to_string(noisefileNo) + std::string(".bin"));
   noisefile.open(sourcedir + std::string("/") + noisefiledir + std::to_string(noisefiledirNo) + noisefilenamediv + std::to_string(noisefileNo) + std::string(".bin"), std::ios::binary);
   noisefilefail = noisefile.fail();
   // biasfile.open(sourcedir + std::string("/") + biasfilenamediv + std::to_string(noisefileNo) + std::string(".dat"));
@@ -52,18 +52,6 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
     //   vv.pop_back();
     //   noisedata.push_back(vv);
     // }
-    
-    int numElementsPerRow = ceil(log((NL-1)/sigma)/dN);
-    while (true) {
-      std::vector<double> vv(numElementsPerRow);
-      noisefile.read(reinterpret_cast<char*>(vv.data()), numElementsPerRow * sizeof(double));
-
-      // EOFに到達して完全に読み込まれなかった場合を確認
-      if (noisefile.gcount() != numElementsPerRow * sizeof(double)) {
-        break; // 全行の読み込み完了または不完全な行をスキップ
-      }
-      noisedata.push_back(vv);
-    }
 
   //   while (std::getline(biasfile, str)) {
   //     std::vector<double> vv;
@@ -76,6 +64,18 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
   //     biasdata.push_back(vv);
   //   }
 
+    int numElementsPerRow = ceil(log((NLnoise/2-1)/sigma)/dN);
+    while (true) {
+      std::vector<double> vv(numElementsPerRow);
+      noisefile.read(reinterpret_cast<char*>(vv.data()), numElementsPerRow * sizeof(double));
+
+      // EOFに到達して完全に読み込まれなかった場合を確認
+      if (noisefile.gcount() != numElementsPerRow * sizeof(double)) {
+        break; // 全行の読み込み完了または不完全な行をスキップ
+      }
+      noisedata.push_back(vv);
+    }
+
     while (true) {
       std::vector<double> vv(numElementsPerRow);
       biasfile.read(reinterpret_cast<char*>(vv.data()), numElementsPerRow * sizeof(double));
@@ -86,7 +86,6 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
       }
       biasdata.push_back(vv);
     }
-    std::cout << "The box sizes. " << noisedata.size() << ' ' << biasdata.size() << ' ' << NL << std::endl;
 
     /*
     for (size_t i = 0; i < NL*NL*NL/div; i++) {
@@ -99,7 +98,8 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
     std::cout << "Noise/Bias data imported. Box size is " << NL << "." << std::endl;
     // Nfile.open(Nfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
     // Nfile.open(Noiseprefix + std::to_string(NoisefileDirNo) + Nfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
-    Nfile.open(Noiseprefix + std::to_string(NL) + std::string("_") + std::to_string(NoisefileDirNo) + std::string(".dat"), std::ios::app);
+    Nfile.open(Noiseprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(NoisefileDirNo) + std::string(".dat"), std::ios::app);
+    logwfile.open(logwfileprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(NoisefileDirNo) + std::string(".dat"), std::ios::app);
 
     Hdata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL*NL*NL,0));
     pidata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL*NL*NL,0));
@@ -242,6 +242,18 @@ void STOLAS::spectrum() {
   std::cout << "ExportPowerSpectrum" << std::endl;
 }
 
+// calculation of weight
+void STOLAS::weight(int NoiseNo) {
+  double logw = 0.;
+  for (size_t n=0; n<noisedata[0].size(); n++) {
+    double N = (n+totalnoiseNo*NoiseNo)*dN;
+    double Bias = bias/dNbias/sqrt(2*M_PI)*exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
+    logw -= Bias*noisedata[0][n]*sqrt(dN) + (Bias*Bias*dN)/2;
+  }
+  logwfile << NoiseNo << ' ' << logw << std::endl;
+}
+  
+
 // Calculate compaction function
 void STOLAS::compaction() {
   prbfile.open(prbfileprefix + std::string(".dat"), std::ios::app);
@@ -249,7 +261,7 @@ void STOLAS::compaction() {
   prbfile << std::setprecision(10);
   cmpfile << std::setprecision(10);
 
-  //calculation of weight
+  // calculation of weight
   double logw = 0.;
   for (size_t n=0; n<noisedata[0].size(); n++) {
     double N = n*dN;

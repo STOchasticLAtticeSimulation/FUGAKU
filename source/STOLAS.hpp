@@ -32,13 +32,14 @@ protected:
   const std::string cmpfileprefix = sdatadir + "/compaction_";
   const std::string prbfileprefix = sdatadir + "/probabilities";
   const std::string powsfileprefix = sdatadir + "/powers";
+  const std::string logwfileprefix = sdatadir + "/logw_";
   bool noisefilefail, biasfilefail;
 
   std::string model;
   int Nn, noisefiledirNo, noisefileNo;
   double dN, bias, Nbias, dNbias;
   std::ifstream noisefile, biasfile;
-  std::ofstream Nfile, Hfile, pifile, powfile, cmpfile, prbfile, powsfile;
+  std::ofstream Nfile, Hfile, pifile, powfile, cmpfile, prbfile, powsfile, logwfile;
   std::vector<double> phii;
   std::vector<std::vector<double>> noisedata, biasdata, Hdata, pidata;
   std::vector<double> Ndata;
@@ -61,6 +62,7 @@ public:
   void animation();
   void spectrum();
   void compaction();
+  void weight(int noisefileNo);
 
   double ep(double phi, double pi);
   double hubble(double phi, double pi);
