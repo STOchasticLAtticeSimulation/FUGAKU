@@ -17,7 +17,7 @@ const double dlogn = 0.1; // Width of bin in power spectrum
 // Importance sampling
 const double Nbias = 3.8; // Time of the bias
 const double dNbias = 0.1; // Variance of the bias
-const double bias = 1*20*sqrt(dNbias); // Amplitude of the bias
+const double bias = 0*20*sqrt(dNbias); // Amplitude of the bias
 
 // Outputs
 const bool szeta = true; // Output the zeta

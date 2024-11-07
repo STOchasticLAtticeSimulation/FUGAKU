@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
     }
 
     if(szeta) stolas.dNmap(noiseNo);
-    stolas.weight(noiseNo);
+    if(scompaction || noiseNo==0) stolas.weight();
   }
 
 

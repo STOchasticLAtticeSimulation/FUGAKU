@@ -62,7 +62,7 @@ public:
   void animation();
   void spectrum();
   void compaction();
-  void weight(int noisefileNo);
+  void weight();
 
   double ep(double phi, double pi);
   double hubble(double phi, double pi);

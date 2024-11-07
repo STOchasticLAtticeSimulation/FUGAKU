@@ -243,14 +243,14 @@ void STOLAS::spectrum() {
 }
 
 // calculation of weight
-void STOLAS::weight(int NoiseNo) {
+void STOLAS::weight() {
   double logw = 0.;
   for (size_t n=0; n<noisedata[0].size(); n++) {
-    double N = (n+totalnoiseNo*NoiseNo)*dN;
+    double N = n*dN;
     double Bias = bias/dNbias/sqrt(2*M_PI)*exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
     logw -= Bias*noisedata[0][n]*sqrt(dN) + (Bias*Bias*dN)/2;
   }
-  logwfile << NoiseNo << ' ' << logw << std::endl;
+  logwfile << noisefileNo << ' ' << logw << std::endl;
 }
   
 
