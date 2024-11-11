@@ -17,12 +17,12 @@ const double dlogn = 0.1; // Width of bin in power spectrum
 // Importance sampling
 const double Nbias = 3.8; // Time of the bias
 const double dNbias = 0.1; // Variance of the bias
-const double bias = 0*20*sqrt(dNbias); // Amplitude of the bias
+const double bias = 1*20*sqrt(dNbias); // Amplitude of the bias
 
 // Outputs
 const bool szeta = true; // Output the zeta
-const bool spower = false; // Output the power spectrum
-const bool scompaction = false; // Output the compaction
+const bool spower = true; // Output the power spectrum
+const bool scompaction = true; // Output the compaction
 const bool sanimation = false; // Output the animation
 
 // Directory name of saved data, you can change after "make clean" in your terminal.

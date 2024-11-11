@@ -20,7 +20,6 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
   Nbias = NBias;
   dNbias = DNbias;
   noisefileNo = NoisefileNo;
-  // NL = NL;//cbrt(NL*NL*NL/totalnoiseNo); // Noise map size
 
   std::cout << "Noise file No. : " << noisefileNo << std::endl;
   
@@ -40,8 +39,8 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
   if (!noisefile.fail() && !biasfile.fail()) {
     std::cout << "model : " << model << std::endl;
 
-    std::string str;
-    double dd;
+    // std::string str;
+    // double dd;
     // while (std::getline(noisefile, str)) {
     //   std::vector<double> vv;
     //   std::stringstream ss(str);
@@ -99,7 +98,7 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
     // Nfile.open(Nfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
     // Nfile.open(Noiseprefix + std::to_string(NoisefileDirNo) + Nfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
     Nfile.open(Noiseprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(NoisefileDirNo) + std::string(".dat"), std::ios::app);
-    logwfile.open(logwfileprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(NoisefileDirNo) + std::string(".dat"), std::ios::app);
+    logwfile.open(logwfileprefix + std::to_string(NLnoise) + std::string(".dat"), std::ios::app);
 
     Hdata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL*NL*NL,0));
     pidata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL*NL*NL,0));
@@ -262,12 +261,12 @@ void STOLAS::compaction() {
   cmpfile << std::setprecision(10);
 
   // calculation of weight
-  double logw = 0.;
-  for (size_t n=0; n<noisedata[0].size(); n++) {
-    double N = n*dN;
-    double Bias = bias/dNbias/sqrt(2*M_PI)*exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
-    logw -= Bias*noisedata[0][n]*sqrt(dN) + (Bias*Bias*dN)/2;
-  }
+  // double logw = 0.;
+  // for (size_t n=0; n<noisedata[0].size(); n++) {
+  //   double N = n*dN;
+  //   double Bias = bias/dNbias/sqrt(2*M_PI)*exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
+  //   logw -= Bias*noisedata[0][n]*sqrt(dN) + (Bias*Bias*dN)/2;
+  // }
 
   double Naverage = 0;
   int dr = 1;
@@ -350,7 +349,8 @@ void STOLAS::compaction() {
   }
   CompactionInt /= pow(Rmax, 3)/3.;
 
-  prbfile << noisefileNo << ' ' << logw << ' ' << CompactionInt << ' ' << CompactionMax << ' ' << Rmax << ' ' << rmax << std::endl;
+  prbfile << noisefileNo //<< ' ' << logw 
+  << ' ' << CompactionInt << ' ' << CompactionMax << ' ' << Rmax << ' ' << rmax << std::endl;
   std::cout << "ExportCompactionFunction" << std::endl;
 }
 
