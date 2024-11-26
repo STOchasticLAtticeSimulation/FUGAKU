@@ -13,7 +13,7 @@ if len(args) != 2:
 start_time = time.time()
 
 # 1. 行列のサイズやデータ型を設定します
-NL = 2**6
+NL = 2**8
 dN = 0.01
 sigma = 0.1
 
