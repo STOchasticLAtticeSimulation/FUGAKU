@@ -4,7 +4,8 @@ std::vector<double> biaslist(double N);
 
 int main() 
 {
-  std::ofstream ofs(biasfilename);
+//   std::ofstream ofs(biasfilename);
+  std::ofstream ofs("biasdata/biasmap" + std::string(".bin"), std::ios::out | std::ios::binary);
   if (ofs.fail()) {
     std::cout << "The bias file couldn't be opened. 'mkdir biasdata'" << std::endl;
     return -1;
@@ -24,18 +25,18 @@ int main()
   std::cout << "OpenMP : Enabled (Max # of threads = " << omp_get_max_threads() << ")" << std::endl;
 #endif
 
-  std::cout << "Box size : " << NL << std::endl;
+  std::cout << "Box size : " << NLnoise << std::endl;
   
-  int totalstep = ceil(log((NL/2-1)/sigma)/dN), count = 0;
-  // std::vector<std::vector<double>> biasdata(totalstep, std::vector<double>(NL*NL*NL,0));
+  int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN), count = 0;
+  // std::vector<std::vector<double>> biasdata(totalstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
   int divstep = int(totalstep/divnumber);
   int modstep = int(totalstep%divnumber);
   for (int l=0; l<divnumber+1; l++) {
     std::vector<std::vector<double>> biasdata;
     if (l<divnumber) {
-      biasdata = std::vector<std::vector<double>>(divstep, std::vector<double>(NL*NL*NL,0));
+      biasdata = std::vector<std::vector<double>>(divstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
     } else {
-      biasdata = std::vector<std::vector<double>>(modstep, std::vector<double>(NL*NL*NL,0));
+      biasdata = std::vector<std::vector<double>>(modstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
     }
     int count = 0;
   
@@ -55,12 +56,15 @@ int main()
     std::cout << std::endl;
     
     for (size_t n=0; n<biasdata.size(); n++) {
+      /*
       for (size_t i=0; i<biasdata[0].size(); i++) {
         if (l<divnumber || n<modstep) ofs << biasdata[n][i] << ' ';
       }
       if (l<divnumber || n<modstep) ofs << std::endl;
+      */
 
-      //ofs.write(reinterpret_cast<const char*>(biasdata[n].data()), biasdata[n].size()*sizeof(double));
+      ofs.write(reinterpret_cast<const char*>(biasdata[n].data()), biasdata[n].size()*sizeof(double));
+
       std::cout << "\rExporting :      " << std::setw(3) << 100*n/biasdata.size() << "%" << std::flush;
     }
     std::cout << "\rExporting :      100%" << std::endl;
@@ -75,13 +79,13 @@ int main()
 
 
 std::vector<double> biaslist(double N) {
-  std::vector<std::vector<std::vector<std::complex<double>>>> bk(NL, std::vector<std::vector<std::complex<double>>>(NL, std::vector<std::complex<double>>(NL, 0)));
+  std::vector<std::vector<std::vector<std::complex<double>>>> bk(NLnoise, std::vector<std::vector<std::complex<double>>>(NLnoise, std::vector<std::complex<double>>(NLnoise, 0)));
   int count = 0;
   double nsigma = sigma*exp(N);
-  std::vector<double> biaslist(NL*NL*NL,0);
+  std::vector<double> biaslist(NLnoise*NLnoise*NLnoise,0);
   
   LOOP{
-    if (innsigma(i,j,k,NL,nsigma,dn)) {
+    if (innsigma(i,j,k,NLnoise,nsigma,dn)) {
       bk[i][j][k] = 1;
       count++;
     }
@@ -94,7 +98,7 @@ std::vector<double> biaslist(double N) {
 
   std::vector<std::vector<std::vector<std::complex<double>>>> biaslattice = fft(bk);
   LOOP{
-    biaslist[i*NL*NL + j*NL + k] = biaslattice[i][j][k].real();
+    biaslist[i*NLnoise*NLnoise + j*NLnoise + k] = biaslattice[i][j][k].real();
   }
 
   return biaslist;

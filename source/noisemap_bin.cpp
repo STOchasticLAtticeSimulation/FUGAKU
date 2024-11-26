@@ -30,9 +30,9 @@ int main(int argc, char* argv[])
   std::cout << "OpenMP : Enabled (Max # of threads = " << omp_get_max_threads() << ")" << std::endl;
 #endif
 
-  std::cout << "Box size : " << NL << std::endl;
+  std::cout << "Box size : " << NLnoise << std::endl;
   
-  int totalstep = ceil(log((NL/2-1)/sigma)/dN); //, count = 0;
+  int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN); //, count = 0;
   //int divnumber = 10;
   int divstep = int(totalstep/divnumber);
   int modstep = int(totalstep%divnumber);
@@ -40,9 +40,9 @@ int main(int argc, char* argv[])
   for (int l=0; l<divnumber+1; l++) {
     std::vector<std::vector<double>> noisedata;
     if (l<divnumber) {
-      noisedata = std::vector<std::vector<double>>(divstep, std::vector<double>(NL*NL*NL,0));
+      noisedata = std::vector<std::vector<double>>(divstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
     } else {
-      noisedata = std::vector<std::vector<double>>(modstep, std::vector<double>(NL*NL*NL,0));
+      noisedata = std::vector<std::vector<double>>(modstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
     } 
     int count = 0;
     
@@ -86,17 +86,17 @@ int main(int argc, char* argv[])
 
 
 std::vector<double> dwlist(double N) {
-  std::vector<std::vector<std::vector<std::complex<double>>>> dwk(NL, std::vector<std::vector<std::complex<double>>>(NL, std::vector<std::complex<double>>(NL, 0)));
+  std::vector<std::vector<std::vector<std::complex<double>>>> dwk(NLnoise, std::vector<std::vector<std::complex<double>>>(NLnoise, std::vector<std::complex<double>>(NLnoise, 0)));
   int count = 0;
   double nsigma = sigma*exp(N);
-  std::vector<double> dwlist(NL*NL*NL,0);
+  std::vector<double> dwlist(NLnoise*NLnoise*NLnoise,0);
   
   LOOP{
-    if (innsigma(i,j,k,NL,nsigma,dn)) {
-      if (realpoint(i,j,k,NL)) {
+    if (innsigma(i,j,k,NLnoise,nsigma,dn)) {
+      if (realpoint(i,j,k,NLnoise)) {
 	dwk[i][j][k] = dist(engine);
 	count++;
-      } else if (complexpoint(i,j,k,NL)) {
+      } else if (complexpoint(i,j,k,NLnoise)) {
 	dwk[i][j][k] = (dist(engine) + II*dist(engine))/sqrt(2);
 	count++;
       }
@@ -106,24 +106,24 @@ std::vector<double> dwlist(double N) {
   // reflection
   int ip, jp, kp; // reflected index
   LOOP{
-    if (innsigma(i,j,k,NL,nsigma,dn)) {
-      if (!(realpoint(i,j,k,NL)||complexpoint(i,j,k,NL))) {
+    if (innsigma(i,j,k,NLnoise,nsigma,dn)) {
+      if (!(realpoint(i,j,k,NLnoise)||complexpoint(i,j,k,NLnoise))) {
 	if (i==0) {
 	  ip = 0;
 	} else {
-	  ip = NL-i;
+	  ip = NLnoise-i;
 	}
 	
 	if (j==0) {
 	  jp = 0;
 	} else {
-	  jp = NL-j;
+	  jp = NLnoise-j;
 	}
 	
 	if (k==0) {
 	  kp = 0;
 	} else {
-	  kp = NL-k;
+	  kp = NLnoise-k;
 	}
 	
 	dwk[i][j][k] = conj(dwk[ip][jp][kp]);
@@ -139,7 +139,7 @@ std::vector<double> dwlist(double N) {
 
   std::vector<std::vector<std::vector<std::complex<double>>>> dwlattice = fft(dwk);
   LOOP{
-    dwlist[i*NL*NL + j*NL + k] = dwlattice[i][j][k].real();
+    dwlist[i*NLnoise*NLnoise + j*NLnoise + k] = dwlattice[i][j][k].real();
   }
 
   return dwlist;

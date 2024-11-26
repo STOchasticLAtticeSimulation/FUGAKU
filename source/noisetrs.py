@@ -21,7 +21,7 @@ rows, cols = math.ceil(math.log((NL/2-1)/sigma)/dN), NL**3  # 行数と列数
 dtype = 'float64' # データ型
 
 # 出力ファイルのチャンクサイズを指定（例：5000列ごとに分割）
-num_chunks = 2**4
+num_chunks = 2**3
 chunk_size = int(cols / num_chunks)
 
 # 2. メモリマップを使用して元データを読み込む
@@ -65,4 +65,3 @@ end_time = time.time()
 execution_time = end_time - start_time
 
 print(f"Execution time: {execution_time:.2f} seconds")
-

@@ -24,7 +24,7 @@ std::mt19937 engine(seed());
 std::normal_distribution<> dist(0., 1.);
 
 // useful macro
-#define LOOP for(int i = 0; i < NL; i++) for(int j = 0; j < NL; j++) for(int k = 0; k < NL; k++)
+#define LOOP for(int i = 0; i < NLnoise; i++) for(int j = 0; j < NLnoise; j++) for(int k = 0; k < NLnoise; k++)
 
 
 bool innsigma(int nx, int ny, int nz, int Num, double nsigma, double dn); // judge if point is in nsigma sphere shell
