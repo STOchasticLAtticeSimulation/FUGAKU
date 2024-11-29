@@ -100,10 +100,10 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
     Nfile.open(Noiseprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(NoisefileDirNo) + std::string(".dat"), std::ios::app);
     logwfile.open(logwfileprefix + std::to_string(NLnoise) + std::string(".dat"), std::ios::app);
 
-    Hdata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL*NL*NL,0));
-    pidata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL*NL*NL,0));
-    Ndata = std::vector<double>(NL*NL*NL,0);
-    Nmap3D = std::vector<std::vector<std::vector<std::complex<double>>>>(NL, std::vector<std::vector<std::complex<double>>>(NL, std::vector<std::complex<double>>(NL, 0)));
+    Hdata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL,0));
+    pidata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL,0));
+    Ndata = std::vector<double>(NL,0);
+    // Nmap3D = std::vector<std::vector<std::vector<std::complex<double>>>>(NL, std::vector<std::vector<std::complex<double>>>(NL, std::vector<std::complex<double>>(NL, 0)));
   }
 }
 
@@ -132,7 +132,7 @@ void STOLAS::dNmap(int NoiseNo) {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-  for (int i=0; i<NL*NL*NL; i++) {
+  for (int i=0; i<NL; i++) {
     double N=0;
     #if MODEL==1
       double N0;
@@ -177,69 +177,69 @@ void STOLAS::dNmap(int NoiseNo) {
 #endif
     {
       Ndata[i] = N;
-      Nfile << i + NL*NL*NL*NoiseNo << ' ' << N << std::endl;
+      Nfile << i + NL*NoiseNo << ' ' << N << std::endl;
       complete++;
-      std::cout << "\rLatticeSimulation : " << std::setw(3) << 100*complete/NL/NL/NL << "%" << std::flush;
+      std::cout << "\rLatticeSimulation : " << std::setw(3) << 100*complete/NL << "%" << std::flush;
     }
   }
   std::cout << std::endl;
 
 }
 
-// Calculate power spectrum
-void STOLAS::spectrum() {
-  powfile.open(powfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
-  powfile << std::setprecision(10);
-  for (int i=0; i<NL*NL*NL; i++) {
-    int x=i/NL/NL ,y=(i%(NL*NL))/NL, z=i%NL;
-    Nmap3D[x][y][z] = Ndata[i];
-  }
-  std::vector<std::vector<std::vector<std::complex<double>>>> Nk=fft(Nmap3D);
+// // Calculate power spectrum
+// void STOLAS::spectrum() {
+//   powfile.open(powfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
+//   powfile << std::setprecision(10);
+//   for (int i=0; i<NL*NL*NL; i++) {
+//     int x=i/NL/NL ,y=(i%(NL*NL))/NL, z=i%NL;
+//     Nmap3D[x][y][z] = Ndata[i];
+//   }
+//   std::vector<std::vector<std::vector<std::complex<double>>>> Nk=fft(Nmap3D);
   
-  powsfile.open(powsfileprefix + std::string(".dat"), std::ios::app);
-  powsfile << std::setprecision(10);
-  int imax = ceil(log(NL/2)/dlogn);
-  std::vector<double> disc_power(imax, 0);
+//   powsfile.open(powsfileprefix + std::string(".dat"), std::ios::app);
+//   powsfile << std::setprecision(10);
+//   int imax = ceil(log(NL/2)/dlogn);
+//   std::vector<double> disc_power(imax, 0);
 
-  LOOP{
-    int nxt, nyt, nzt; // shifted index
-    if (i<=NL/2) {
-      nxt = i;
-    } else {
-      nxt = i-NL;
-    }
+//   LOOP{
+//     int nxt, nyt, nzt; // shifted index
+//     if (i<=NL/2) {
+//       nxt = i;
+//     } else {
+//       nxt = i-NL;
+//     }
 
-    if (j<=NL/2) {
-      nyt = j;
-    } else {
-      nyt = j-NL;
-    }
+//     if (j<=NL/2) {
+//       nyt = j;
+//     } else {
+//       nyt = j-NL;
+//     }
 
-    if (k<=NL/2) {
-      nzt = k;
-    } else {
-      nzt = k-NL;
-    }
+//     if (k<=NL/2) {
+//       nzt = k;
+//     } else {
+//       nzt = k-NL;
+//     }
     
-    double rk=nxt*nxt+nyt*nyt+nzt*nzt;
-    powfile << sqrt(rk) << " " << norm(Nk[i][j][k])/NL/NL/NL/NL/NL/NL << std::endl;
+//     double rk=nxt*nxt+nyt*nyt+nzt*nzt;
+//     powfile << sqrt(rk) << " " << norm(Nk[i][j][k])/NL/NL/NL/NL/NL/NL << std::endl;
 
-    double LogNk = log(sqrt(rk));
-    double calPk = norm(Nk[i][j][k])/NL/NL/NL/NL/NL/NL;
-    for (size_t ii = 0; ii < imax; ii++) {
-      if (std::abs(dlogn*ii-LogNk)<=dlogn/2.) {
-        disc_power[ii] += calPk/dlogn;
-        break;
-      }
-    }
-  }
-  powsfile << noisefileNo << " ";
-  for (size_t ii = 0; ii < imax; ii++) {
-    powsfile << disc_power[ii] << " " ;
-  }
-  powsfile << std::endl;
-  std::cout << "ExportPowerSpectrum" << std::endl;
-}
+//     double LogNk = log(sqrt(rk));
+//     double calPk = norm(Nk[i][j][k])/NL/NL/NL/NL/NL/NL;
+//     for (size_t ii = 0; ii < imax; ii++) {
+//       if (std::abs(dlogn*ii-LogNk)<=dlogn/2.) {
+//         disc_power[ii] += calPk/dlogn;
+//         break;
+//       }
+//     }
+//   }
+//   powsfile << noisefileNo << " ";
+//   for (size_t ii = 0; ii < imax; ii++) {
+//     powsfile << disc_power[ii] << " " ;
+//   }
+//   powsfile << std::endl;
+//   std::cout << "ExportPowerSpectrum" << std::endl;
+// }
 
 // calculation of weight
 void STOLAS::weight() {
@@ -253,106 +253,106 @@ void STOLAS::weight() {
 }
   
 
-// Calculate compaction function
-void STOLAS::compaction() {
-  prbfile.open(prbfileprefix + std::string(".dat"), std::ios::app);
-  cmpfile.open(cmpfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
-  prbfile << std::setprecision(10);
-  cmpfile << std::setprecision(10);
+// // Calculate compaction function
+// void STOLAS::compaction() {
+//   prbfile.open(prbfileprefix + std::string(".dat"), std::ios::app);
+//   cmpfile.open(cmpfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
+//   prbfile << std::setprecision(10);
+//   cmpfile << std::setprecision(10);
 
-  // calculation of weight
-  // double logw = 0.;
-  // for (size_t n=0; n<noisedata[0].size(); n++) {
-  //   double N = n*dN;
-  //   double Bias = bias/dNbias/sqrt(2*M_PI)*exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
-  //   logw -= Bias*noisedata[0][n]*sqrt(dN) + (Bias*Bias*dN)/2;
-  // }
+//   // calculation of weight
+//   // double logw = 0.;
+//   // for (size_t n=0; n<noisedata[0].size(); n++) {
+//   //   double N = n*dN;
+//   //   double Bias = bias/dNbias/sqrt(2*M_PI)*exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
+//   //   logw -= Bias*noisedata[0][n]*sqrt(dN) + (Bias*Bias*dN)/2;
+//   // }
 
-  double Naverage = 0;
-  int dr = 1;
-  for (size_t n = 0; n < Ndata.size(); n++) {
-    Naverage += Ndata[n];
-  }
-  Naverage /= NL*NL*NL;
+//   double Naverage = 0;
+//   int dr = 1;
+//   for (size_t n = 0; n < Ndata.size(); n++) {
+//     Naverage += Ndata[n];
+//   }
+//   Naverage /= NL*NL*NL;
 
-  // zeta map
-  for (size_t n = 0; n < Ndata.size(); n++) {
-    Ndata[n] -= Naverage;
-  }
+//   // zeta map
+//   for (size_t n = 0; n < Ndata.size(); n++) {
+//     Ndata[n] -= Naverage;
+//   }
 
-  // radial profile
-  std::vector<std::vector<double>> zetar(2, std::vector<double>(NL/2,0));
-  for (size_t i=0; i<NL*NL*NL; i++) {
-    int nx=i/NL/NL ,ny=(i%(NL*NL))/NL, nz=i%NL;
+//   // radial profile
+//   std::vector<std::vector<double>> zetar(2, std::vector<double>(NL/2,0));
+//   for (size_t i=0; i<NL*NL*NL; i++) {
+//     int nx=i/NL/NL ,ny=(i%(NL*NL))/NL, nz=i%NL;
 
-    // centering
-    if (nx<=NL/2) {
-      nx = nx;
-    }
-    else {
-      nx = nx-NL;
-    }
-    if (ny<=NL/2) {
-      ny = ny;
-    }
-    else {
-      ny = ny-NL;
-    }
-    if (nz<=NL/2) {
-      nz = nz;
-    }
-    else {
-      nz = nz-NL;
-    }
+//     // centering
+//     if (nx<=NL/2) {
+//       nx = nx;
+//     }
+//     else {
+//       nx = nx-NL;
+//     }
+//     if (ny<=NL/2) {
+//       ny = ny;
+//     }
+//     else {
+//       ny = ny-NL;
+//     }
+//     if (nz<=NL/2) {
+//       nz = nz;
+//     }
+//     else {
+//       nz = nz-NL;
+//     }
 
-    for (size_t ri=0; ri<NL/2; ri++) {
-      double norm = std::abs(sqrt(nx*nx+ny*ny+nz*nz)-ri);
-      if (norm<=dr/2.) {
-        zetar[0][ri]++;
-        zetar[1][ri]+=Ndata[i];
-        break;
-      }
-    }
-  }
-  for (size_t ri=0; ri<NL/2; ri++) {
-    zetar[1][ri] /= zetar[0][ri]; // average
-  }
+//     for (size_t ri=0; ri<NL/2; ri++) {
+//       double norm = std::abs(sqrt(nx*nx+ny*ny+nz*nz)-ri);
+//       if (norm<=dr/2.) {
+//         zetar[0][ri]++;
+//         zetar[1][ri]+=Ndata[i];
+//         break;
+//       }
+//     }
+//   }
+//   for (size_t ri=0; ri<NL/2; ri++) {
+//     zetar[1][ri] /= zetar[0][ri]; // average
+//   }
 
-  // derivative zeta
-  std::vector<double> dzetar(NL/2,0);
-  for (size_t ri=1; ri<NL/2-1; ri++) {
-    dzetar[ri] = (zetar[1][ri+1] - zetar[1][ri-1])/(2.*dr);
-  }
+//   // derivative zeta
+//   std::vector<double> dzetar(NL/2,0);
+//   for (size_t ri=1; ri<NL/2-1; ri++) {
+//     dzetar[ri] = (zetar[1][ri+1] - zetar[1][ri-1])/(2.*dr);
+//   }
 
-  // compaction function
-  double CompactionMax=0, CompactionInt=0, rmax=0, Rmax=0, IntTemp=0;
-  bool Cnegative = false;
-  for (size_t ri=0; ri<NL/2; ri++) {
-    double CompactionTemp = 2./3.*(1. - pow(1 + ri*dzetar[ri], 2));
-    IntTemp += ri*ri*CompactionTemp*exp(3.*zetar[1][ri])*(1 + ri*dzetar[ri]);
+//   // compaction function
+//   double CompactionMax=0, CompactionInt=0, rmax=0, Rmax=0, IntTemp=0;
+//   bool Cnegative = false;
+//   for (size_t ri=0; ri<NL/2; ri++) {
+//     double CompactionTemp = 2./3.*(1. - pow(1 + ri*dzetar[ri], 2));
+//     IntTemp += ri*ri*CompactionTemp*exp(3.*zetar[1][ri])*(1 + ri*dzetar[ri]);
 
-    if (!Cnegative) {
-      if (CompactionTemp < -0.2) {
-	Cnegative = true;
-      }
+//     if (!Cnegative) {
+//       if (CompactionTemp < -0.2) {
+// 	Cnegative = true;
+//       }
       
-      if (CompactionMax<CompactionTemp) {
-	CompactionMax = CompactionTemp;
-	rmax = ri;
-	Rmax = exp(zetar[1][ri])*ri;
-	CompactionInt += IntTemp;
-	IntTemp = 0;
-      }
-    }
+//       if (CompactionMax<CompactionTemp) {
+// 	CompactionMax = CompactionTemp;
+// 	rmax = ri;
+// 	Rmax = exp(zetar[1][ri])*ri;
+// 	CompactionInt += IntTemp;
+// 	IntTemp = 0;
+//       }
+//     }
     
-    cmpfile << ri << ' ' << CompactionTemp << std::endl;
-  }
-  CompactionInt /= pow(Rmax, 3)/3.;
+//     cmpfile << ri << ' ' << CompactionTemp << std::endl;
+//   }
+//   CompactionInt /= pow(Rmax, 3)/3.;
 
-  prbfile << noisefileNo //<< ' ' << logw 
-  << ' ' << CompactionInt << ' ' << CompactionMax << ' ' << Rmax << ' ' << rmax << std::endl;
-  std::cout << "ExportCompactionFunction" << std::endl;
-}
+//   prbfile << noisefileNo //<< ' ' << logw 
+//   << ' ' << CompactionInt << ' ' << CompactionMax << ' ' << Rmax << ' ' << rmax << std::endl;
+//   std::cout << "ExportCompactionFunction" << std::endl;
+// }
 
 // Export animation
 void STOLAS::animation() {

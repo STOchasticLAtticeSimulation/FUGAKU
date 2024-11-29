@@ -22,7 +22,7 @@ const std::string cmpfileprefix = sdatadir + "/compaction_";
 const std::string prbfileprefix = sdatadir + "/probabilities";
 const std::string powsfileprefix = sdatadir + "/powers";
 std::ifstream Nfile;
-std::ofstream powfile, cmpfile, prbfile, powsfile;
+std::ofstream powfile, cmpfile, prbfile, powsfile, Nsortfile;
 
 // useful macro
 #define LOOP for(int i = 0; i < NLnoise; i++) for(int j = 0; j < NLnoise; j++) for(int k = 0; k < NLnoise; k++)
@@ -64,6 +64,13 @@ int main(int argc, char* argv[])
 
   // データのソート
   std::sort(Ndata.begin(), Ndata.end(), compareByFirstColumn);
+
+  Nsortfile.open(MODELdir + sdatadir + "/Nsort_" + std::to_string(NLnoise) + std::string("_") + std::to_string(noisefiledirNo) + std::string(".dat"));
+  Nsortfile << std::setprecision(10);
+  for (size_t ii = 0; ii < Ndata.size(); ii++) {
+    Nsortfile << Ndata[ii][1] << " " << std::endl;
+  }
+  std::cout << "Sort done" << std::endl;
 
   if(spower) spectrum_div(Ndata,noisefiledirNo);
   if(scompaction) compaction_div(Ndata,noisefiledirNo);
