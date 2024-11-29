@@ -1,6 +1,6 @@
 #NOISE = noisemap
 NOISE = noisemap_bin
-BIAS = biasmap
+BIAS = biasmap_bin
 PARAM = parameters
 
 #CXX := g++-13

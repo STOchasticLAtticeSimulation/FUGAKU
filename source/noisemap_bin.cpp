@@ -33,13 +33,13 @@ int main(int argc, char* argv[])
   std::cout << "Box size : " << NLnoise << std::endl;
   
   int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN); //, count = 0;
-  //int divnumber = 10;
-  int divstep = int(totalstep/divnumber);
-  int modstep = int(totalstep%divnumber);
+  //int totalnoiseNo = 10;
+  int divstep = int(totalstep/totalnoiseNo);
+  int modstep = int(totalstep%totalnoiseNo);
   
-  for (int l=0; l<divnumber+1; l++) {
+  for (int l=0; l<totalnoiseNo+1; l++) {
     std::vector<std::vector<double>> noisedata;
-    if (l<divnumber) {
+    if (l<totalnoiseNo) {
       noisedata = std::vector<std::vector<double>>(divstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
     } else {
       noisedata = std::vector<std::vector<double>>(modstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
 #pragma omp parallel for
 #endif
     for (int i=0; i<divstep; i++) {
-      if (l<divnumber || i<modstep) noisedata[i] = dwlist((i+l*divstep)*dN);
+      if (l<totalnoiseNo || i<modstep) noisedata[i] = dwlist((i+l*divstep)*dN);
 #ifdef _OPENMP
 #pragma omp critical
 #endif
@@ -64,9 +64,9 @@ int main(int argc, char* argv[])
     for (size_t n=0; n<noisedata.size(); n++) {
       /*
       for (size_t i=0; i<noisedata[0].size()-1; i++) {
-        if (l<divnumber || n<modstep) ofs << noisedata[n][i] << ' ';
+        if (l<totalnoiseNo || n<modstep) ofs << noisedata[n][i] << ' ';
       }
-      if (l<divnumber || n<modstep) ofs << noisedata[n][noisedata[0].size()-1] << std::endl;
+      if (l<totalnoiseNo || n<modstep) ofs << noisedata[n][noisedata[0].size()-1] << std::endl;
       */
       
       ofs.write(reinterpret_cast<const char*>(noisedata[n].data()), noisedata[n].size()*sizeof(double));

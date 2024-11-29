@@ -29,11 +29,11 @@ int main()
   
   int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN), count = 0;
   // std::vector<std::vector<double>> biasdata(totalstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
-  int divstep = int(totalstep/divnumber);
-  int modstep = int(totalstep%divnumber);
-  for (int l=0; l<divnumber+1; l++) {
+  int divstep = int(totalstep/totalnoiseNo);
+  int modstep = int(totalstep%totalnoiseNo);
+  for (int l=0; l<totalnoiseNo+1; l++) {
     std::vector<std::vector<double>> biasdata;
-    if (l<divnumber) {
+    if (l<totalnoiseNo) {
       biasdata = std::vector<std::vector<double>>(divstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
     } else {
       biasdata = std::vector<std::vector<double>>(modstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
@@ -44,7 +44,7 @@ int main()
 #pragma omp parallel for
 #endif
     for (int i=0; i<divstep; i++) {
-      if (l<divnumber || i<modstep) biasdata[i] = biaslist((i+l*divstep)*dN);
+      if (l<totalnoiseNo || i<modstep) biasdata[i] = biaslist((i+l*divstep)*dN);
 #ifdef _OPENMP
 #pragma omp critical
 #endif
@@ -58,9 +58,9 @@ int main()
     for (size_t n=0; n<biasdata.size(); n++) {
       /*
       for (size_t i=0; i<biasdata[0].size(); i++) {
-        if (l<divnumber || n<modstep) ofs << biasdata[n][i] << ' ';
+        if (l<totalnoiseNo || n<modstep) ofs << biasdata[n][i] << ' ';
       }
-      if (l<divnumber || n<modstep) ofs << std::endl;
+      if (l<totalnoiseNo || n<modstep) ofs << std::endl;
       */
 
       ofs.write(reinterpret_cast<const char*>(biasdata[n].data()), biasdata[n].size()*sizeof(double));
