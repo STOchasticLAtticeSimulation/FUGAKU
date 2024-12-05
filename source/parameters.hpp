@@ -6,7 +6,7 @@
 // Parameters of STOLAS
 const double sigma = 0.1; // ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
 const double dn = 1; // Thickness of nsigma sphere shell
-const int NLnoise = pow(2,6); // Box size L
+const int NLnoise = pow(2,5); // Box size L
 const int totalnoiseNo = pow(2,3); // The number of chunks
 const int NL = NLnoise/pow(totalnoiseNo,1./3.); // Box size L for each noisemap
 const int divnumber = pow(2,4); // The number of chunks

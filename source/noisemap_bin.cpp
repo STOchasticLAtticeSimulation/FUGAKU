@@ -36,14 +36,14 @@ int main(int argc, char* argv[])
   //int divnumber = 10;
   int divstep = int(totalstep/divnumber);
   int modstep = int(totalstep%divnumber);
-  
+
   for (int l=0; l<divnumber+1; l++) {
     std::vector<std::vector<double>> noisedata;
     if (l<divnumber) {
       noisedata = std::vector<std::vector<double>>(divstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
     } else {
       noisedata = std::vector<std::vector<double>>(modstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
-    } 
+    }
     //int count = 0;
     
 #ifdef _OPENMP
@@ -66,10 +66,10 @@ int main(int argc, char* argv[])
 
     for (size_t n=0; n<noisedata.size(); n++) {
       /*
-      for (size_t i=0; i<noisedata[0].size()-1; i++) {
-        if (l<divnumber || n<modstep) ofs << noisedata[n][i] << ' ';
-      }
-      if (l<divnumber || n<modstep) ofs << noisedata[n][noisedata[0].size()-1] << std::endl;
+	for (size_t i=0; i<noisedata[0].size()-1; i++) {
+	if (l<divnumber || n<modstep) ofs << noisedata[n][i] << ' ';
+	}
+	if (l<divnumber || n<modstep) ofs << noisedata[n][noisedata[0].size()-1] << std::endl;
       */
       
       ofs.write(reinterpret_cast<const char*>(noisedata[n].data()), noisedata[n].size()*sizeof(double));
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
       //std::cout << "\rExporting :       " << std::setw(3) << 100*n/noisedata.size() << "%" << std::flush;
     }
     //std::cout << "\rExporting :       100%" << std::endl;
-    std::cout << l << " / " << divnumber+1 << std::endl;
+    std::cout << l+1 << " / " << divnumber+1 << std::endl;
   }
 
   // ---------- stop timer ----------
