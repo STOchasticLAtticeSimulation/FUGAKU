@@ -5,13 +5,13 @@ std::vector<double> biaslist(double N);
 std::vector<double> biaslist_fftw(double N, int l);
 std::vector<std::vector<std::vector<std::complex<double>>>> fft_fftw(const std::vector<std::vector<std::vector<std::complex<double>>>>& bk, int l);
 
-std::vector<fftw_complex*> invec;//(int(ceil(log((NLnoise/2-1)/sigma)/dN)/totalnoiseNo), nullptr); // FFTW
-std::vector<fftw_complex*> outvec;
+// std::vector<fftw_complex*> invec; // FFTW
+// std::vector<fftw_complex*> outvec;
 
 int main() 
 {
-  std::ofstream ofs(biasfilename);
-//   std::ofstream ofs("biasdata/biasmap" + std::string(".bin"), std::ios::out | std::ios::binary);
+  // std::ofstream ofs(biasfilename);
+  std::ofstream ofs("biasdata/biasmap" + std::string(".bin"), std::ios::out | std::ios::binary);
   if (ofs.fail()) {
     std::cout << "The bias file couldn't be opened. 'mkdir biasdata'" << std::endl;
     return -1;
@@ -49,12 +49,12 @@ fftw_init_threads();
     int count = 0;
 
     // FFT
-    for (int i=0; i<divstep; i++) {
-      fftw_complex* in = nullptr;
-      fftw_complex* out = nullptr;
-      invec.push_back(in);
-      outvec.push_back(out);
-    }
+    // for (int i=0; i<divstep; i++) {
+    //   fftw_complex* in = nullptr;
+    //   fftw_complex* out = nullptr;
+    //   invec.push_back(in);
+    //   outvec.push_back(out);
+    // }
     
 
 #ifdef _OPENMP
@@ -62,7 +62,7 @@ fftw_init_threads();
 #endif
     for (int i=0; i<divstep; i++) {
       if (l<totalnoiseNo || i<modstep) {
-        biasdata[i] = biaslist_fftw((i+l*divstep)*dN, i);
+        biasdata[i] = biaslist_fftw((i+l*divstep)*dN, i); // biaslist((i+l*divstep)*dN); // 
       }
 #ifdef _OPENMP
 #pragma omp critical
@@ -76,12 +76,12 @@ fftw_init_threads();
     
     for (size_t n=0; n<biasdata.size(); n++) {
 
-      for (size_t i=0; i<biasdata[0].size(); i++) {
-        if (l<totalnoiseNo || n<modstep) ofs << biasdata[n][i] << ' ';
-      }
-      if (l<totalnoiseNo || n<modstep) ofs << std::endl;
+      // for (size_t i=0; i<biasdata[0].size(); i++) {
+      //   if (l<totalnoiseNo || n<modstep) ofs << biasdata[n][i] << ' ';
+      // }
+      // if (l<totalnoiseNo || n<modstep) ofs << std::endl;
 
-    //   ofs.write(reinterpret_cast<const char*>(biasdata[n].data()), biasdata[n].size()*sizeof(double));
+      ofs.write(reinterpret_cast<const char*>(biasdata[n].data()), biasdata[n].size()*sizeof(double));
 
       std::cout << "\rExporting :      " << std::setw(3) << 100*n/biasdata.size() << "%" << std::flush;
     }
@@ -159,29 +159,29 @@ std::vector<double> biaslist_fftw(double N, int l) {
 std::vector<std::vector<std::vector<std::complex<double>>>> fft_fftw(const std::vector<std::vector<std::vector<std::complex<double>>>>& bk, int l) {
 
   // FFTW用の入力・出力配列を確保
-  if (invec[l] == nullptr) {
-    invec[l] = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
-  }
-  if (outvec[l] == nullptr) {
-    outvec[l] = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
-  }
-    // fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
-    // fftw_complex* out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
+  // if (invec[l] == nullptr) {
+  //   invec[l] = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
+  // }
+  // if (outvec[l] == nullptr) {
+  //   outvec[l] = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
+  // }
+  fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
+  fftw_complex* out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
 
   // bk (3D std::vector) -> in (1D fftw_complex) に変換
   int idx = 0;
   for (int i = 0; i < NLnoise; ++i) {
     for (int j = 0; j < NLnoise; ++j) {
       for (int k = 0; k < NLnoise; ++k) {
-        invec[l][idx][0] = bk[i][j][k].real();
-        invec[l][idx][1] = bk[i][j][k].imag();
+        in[idx][0] = bk[i][j][k].real();
+        in[idx][1] = bk[i][j][k].imag();
         idx++;
       }
     }
   }
 
   // FFTWプランを作成
-  fftw_plan plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, invec[l], outvec[l], FFTW_FORWARD, FFTW_ESTIMATE);
+  fftw_plan plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
   // FFTを実行
   fftw_execute(plan);
@@ -193,7 +193,7 @@ std::vector<std::vector<std::vector<std::complex<double>>>> fft_fftw(const std::
   for (int i = 0; i < NLnoise; ++i) {
     for (int j = 0; j < NLnoise; ++j) {
       for (int k = 0; k < NLnoise; ++k) {
-        biaslattice[i][j][k] = std::complex<double>(outvec[l][idx][0], outvec[l][idx][1]);
+        biaslattice[i][j][k] = std::complex<double>(out[idx][0], out[idx][1]);
         idx++;
       }
     }
@@ -201,18 +201,16 @@ std::vector<std::vector<std::vector<std::complex<double>>>> fft_fftw(const std::
 
   // メモリ解放
   fftw_destroy_plan(plan);
-  // fftw_free(in);
-  // fftw_free(out);
-  if (invec[l]) {
-    free(invec[l]);
-    invec[l] = nullptr;
-  }
-  if (outvec[l]) {
-    free(outvec[l]);
-    outvec[l] = nullptr;
-  }
-
-    // fftw_cleanup_threads();
+  fftw_free(in);
+  fftw_free(out);
+  // if (invec[l]) {
+  //   free(invec[l]);
+  //   invec[l] = nullptr;
+  // }
+  // if (outvec[l]) {
+  //   free(outvec[l]);
+  //   outvec[l] = nullptr;
+  // }
 
   return biaslattice;
 }
