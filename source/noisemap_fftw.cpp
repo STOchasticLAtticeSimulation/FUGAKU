@@ -29,8 +29,10 @@ int main(int argc, char* argv[])
   before = (double)Nv.tv_sec + (double)Nv.tv_usec * 1.e-6;
   // --------------------------------------
 
+fftw_init_threads();
 #ifdef _OPENMP
   std::cout << "OpenMP : Enabled (Max # of threads = " << omp_get_max_threads() << ")" << std::endl;
+  fftw_plan_with_nthreads(omp_get_max_threads());
 #endif
 
   std::cout << "Box size : " << NLnoise << std::endl;
@@ -48,14 +50,14 @@ int main(int argc, char* argv[])
     } 
     int count = 0;
     
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
+// #ifdef _OPENMP
+// #pragma omp parallel for
+// #endif
     for (int i=0; i<divstep; i++) {
       if (l<totalnoiseNo || i<modstep) noisedata[i] = dwlist_fftw((i+l*divstep)*dN);
-#ifdef _OPENMP
-#pragma omp critical
-#endif
+// #ifdef _OPENMP
+// #pragma omp critical
+// #endif
       {
         count++;
 	std::cout << "\rNoiseGenerating : " << std::setw(3) << 100*count/divstep << "%" << std::flush;
@@ -194,9 +196,9 @@ std::vector<double> dwlist_fftw(double N) {
   }
   dwk /= sqrt(count);
 
-#ifdef _OPENMP
-#pragma omp critical
-#endif
+// #ifdef _OPENMP
+// #pragma omp critical
+// #endif
   {
     std::vector<std::vector<std::vector<std::complex<double>>>> dwlattice = fft_fftw(dwk);
     LOOP{
