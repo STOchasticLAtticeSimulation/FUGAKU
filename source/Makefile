@@ -1,4 +1,4 @@
-NOISE = noisemap_bin
+NOISE = noisemap_fftw
 BIAS = biasmap_fftw
 PARAM = parameters
 
