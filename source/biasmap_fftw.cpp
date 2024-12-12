@@ -80,12 +80,12 @@ fftw_init_threads();
     
     for (size_t n=0; n<biasdata.size(); n++) {
 
-      for (size_t i=0; i<biasdata[0].size(); i++) {
-        if (l<totalnoiseNo || n<modstep) ofs << biasdata[n][i] << ' ';
-      }
-      if (l<totalnoiseNo || n<modstep) ofs << std::endl;
+      // for (size_t i=0; i<biasdata[0].size(); i++) {
+      //   if (l<totalnoiseNo || n<modstep) ofs << biasdata[n][i] << ' ';
+      // }
+      // if (l<totalnoiseNo || n<modstep) ofs << std::endl;
 
-      // ofs.write(reinterpret_cast<const char*>(biasdata[n].data()), biasdata[n].size()*sizeof(double));
+      ofs.write(reinterpret_cast<const char*>(biasdata[n].data()), biasdata[n].size()*sizeof(double));
 
       std::cout << "\rExporting :      " << std::setw(3) << 100*n/biasdata.size() << "%" << std::flush;
     }
