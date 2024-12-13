@@ -6,12 +6,18 @@
 #include <complex>
 #include <vector>
 
+#include <fftw3.h>
+
 std::vector<std::complex<double>> dft(std::vector<std::complex<double>> signal); // 1-dim discrete Fourier trs.
 std::vector<std::vector<std::complex<double>>> dft(std::vector<std::vector<std::complex<double>>> signal); // 2-dim discrete Fourier trs.
 std::vector<std::vector<std::vector<std::complex<double>>>> dft(std::vector<std::vector<std::vector<std::complex<double>>>> signal); // 3-dim discrete Fouriere trs.
 std::vector<std::complex<double>> fft(std::vector<std::complex<double>> signal); // 1-dim fast Fourier trs.
 std::vector<std::vector<std::complex<double>>> fft(std::vector<std::vector<std::complex<double>>> signal); // 2-dim fast Fourier trs.
 std::vector<std::vector<std::vector<std::complex<double>>>> fft(std::vector<std::vector<std::vector<std::complex<double>>>> signal); // 3-dim fast Fourier trs.
+
+
+// FFTW
+std::vector<std::vector<std::vector<std::complex<double>>>> fft_fftw(const std::vector<std::vector<std::vector<std::complex<double>>>>& bk);
 
 
 // DFT
@@ -183,6 +189,54 @@ std::vector<std::vector<std::vector<std::complex<double>>>> fft(std::vector<std:
   }
 
   return signal;
+}
+
+
+// FFTW
+std::vector<std::vector<std::vector<std::complex<double>>>> fft_fftw(const std::vector<std::vector<std::vector<std::complex<double>>>>& bk) {
+
+  // FFTW用の入力・出力配列を確保
+  fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
+  fftw_complex* out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
+
+  // bk (3D std::vector) -> in (1D fftw_complex) に変換
+  int idx = 0;
+  for (int i = 0; i < NLnoise; ++i) {
+    for (int j = 0; j < NLnoise; ++j) {
+      for (int k = 0; k < NLnoise; ++k) {
+        in[idx][0] = bk[i][j][k].real();
+        in[idx][1] = bk[i][j][k].imag();
+        idx++;
+      }
+    }
+  }
+
+  // FFTWプランを作成
+  fftw_plan plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+
+  // FFTを実行
+  fftw_execute(plan);
+
+  // out (1D fftw_complex) -> biaslattice (3D std::vector) に変換
+  std::vector<std::vector<std::vector<std::complex<double>>>> biaslattice(NLnoise, std::vector<std::vector<std::complex<double>>>(NLnoise, std::vector<std::complex<double>>(NLnoise)));
+
+  idx = 0;
+  for (int i = 0; i < NLnoise; ++i) {
+    for (int j = 0; j < NLnoise; ++j) {
+      for (int k = 0; k < NLnoise; ++k) {
+        biaslattice[i][j][k] = std::complex<double>(out[idx][0], out[idx][1]);
+        idx++;
+      }
+    }
+  }
+
+
+  // メモリ解放
+  fftw_destroy_plan(plan);
+  fftw_free(in);
+  fftw_free(out);
+
+  return biaslattice;
 }
 
 

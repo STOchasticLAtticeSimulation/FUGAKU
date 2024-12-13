@@ -1,6 +1,7 @@
 NOISE = noisemap_fftw
 BIAS = biasmap_fftw
 PARAM = parameters
+FUNC = functions
 
 #CXX := g++-13
 CXX := g++
