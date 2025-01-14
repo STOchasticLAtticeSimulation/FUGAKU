@@ -43,8 +43,8 @@ int main(int argc, char* argv[])
       noisedata = std::vector<std::vector<double>>(divstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
     } else {
       noisedata = std::vector<std::vector<double>>(modstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
-    } 
-    int count = 0;
+    }
+    //int count = 0;
     
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -58,8 +58,9 @@ int main(int argc, char* argv[])
         count++;
 	std::cout << "\rNoiseGenerating : " << std::setw(3) << 100*count/divstep << "%" << std::flush;
       }
+      */
     }
-    std::cout << std::endl;
+    //std::cout << std::endl;
 
     for (size_t n=0; n<noisedata.size(); n++) {
       /*
@@ -71,10 +72,10 @@ int main(int argc, char* argv[])
       
       ofs.write(reinterpret_cast<const char*>(noisedata[n].data()), noisedata[n].size()*sizeof(double));
       
-      std::cout << "\rExporting :       " << std::setw(3) << 100*n/noisedata.size() << "%" << std::flush;
+      //std::cout << "\rExporting :       " << std::setw(3) << 100*n/noisedata.size() << "%" << std::flush;
     }
-    std::cout << "\rExporting :       100%" << std::endl;
-    
+    //std::cout << "\rExporting :       100%" << std::endl;
+    std::cout << l+1 << " / " << divnumber+1 << std::endl;
   }
 
   // ---------- stop timer ----------

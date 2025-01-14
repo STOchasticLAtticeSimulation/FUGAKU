@@ -3,8 +3,8 @@ BIAS = biasmap_fftw
 PARAM = parameters
 FUNC = functions
 
-#CXX := g++-13
-CXX := g++
+CXX := g++-14
+#CXX := g++
 #CXX := icpc
 
 #CXXFLAGS := -std=c++11 -O2 -fopenmp
