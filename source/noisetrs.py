@@ -3,6 +3,38 @@ import os
 import math
 import time
 import sys
+import re
+
+# ファイルのパス
+parameter_file_path = 'parameters.hpp'
+
+# 読み取りたい変数名totalnoiseNo
+NL_name = 'NLnoise'
+chunk_name = 'totalnoiseNo'
+value = None
+
+# ファイルを開く
+with open(parameter_file_path, 'r') as file:
+    for line in file:
+        count=0
+        # 'totalnoiseNo' の定義行を検索
+        match = re.search(rf'{NL_name}\s*=\s*pow\((\d+),(\d+)\)', line)
+        if match:
+            base = int(match.group(1))
+            exponent = int(match.group(2))
+            NL = base ** exponent
+            count += 1
+
+        match = re.search(rf'{chunk_name}\s*=\s*pow\((\d+),(\d+)\)', line)
+        if match:
+            base = int(match.group(1))
+            exponent = int(match.group(2))
+            num_chunks = base ** exponent
+            count += 1
+        
+        if count == 2:
+            break
+
 
 args = sys.argv
 if len(args) != 2:
@@ -13,7 +45,7 @@ if len(args) != 2:
 start_time = time.time()
 
 # 1. 行列のサイズやデータ型を設定します
-NL = 2**8
+# NL = 2**5
 dN = 0.01
 sigma = 0.1
 
@@ -21,7 +53,7 @@ rows, cols = math.ceil(math.log((NL/2-1)/sigma)/dN), NL**3  # 行数と列数
 dtype = 'float64' # データ型
 
 # 出力ファイルのチャンクサイズを指定（例：5000列ごとに分割）
-num_chunks = 2**3
+# num_chunks = 2**3
 chunk_size = int(cols / num_chunks)
 
 # 2. メモリマップを使用して元データを読み込む

@@ -22,7 +22,7 @@ const std::string cmpfileprefix = sdatadir + "/compaction_";
 const std::string prbfileprefix = sdatadir + "/probabilities";
 const std::string powsfileprefix = sdatadir + "/powers";
 std::ifstream Nfile;
-std::ofstream powfile, cmpfile, prbfile, powsfile;
+std::ofstream powfile, cmpfile, prbfile, powsfile, Nsortfile;
 
 // useful macro
 #define LOOP for(int i = 0; i < NLnoise; i++) for(int j = 0; j < NLnoise; j++) for(int k = 0; k < NLnoise; k++)
@@ -65,6 +65,13 @@ int main(int argc, char* argv[])
   // データのソート
   std::sort(Ndata.begin(), Ndata.end(), compareByFirstColumn);
 
+  Nsortfile.open(MODELdir + sdatadir + "/Nsort_" + std::to_string(NLnoise) + std::string("_") + std::to_string(noisefiledirNo) + std::string(".dat"));
+  Nsortfile << std::setprecision(10);
+  for (size_t ii = 0; ii < Ndata.size(); ii++) {
+    Nsortfile << Ndata[ii][1] << " " << std::endl;
+  }
+  std::cout << "Sort done" << std::endl;
+
   if(spower) spectrum_div(Ndata,noisefiledirNo);
   if(scompaction) compaction_div(Ndata,noisefiledirNo);
 
@@ -86,20 +93,6 @@ bool compareByFirstColumn(const std::vector<double>& a, const std::vector<double
 
 // Calculate power spectrum
 void spectrum_div(std::vector<std::vector<double>> Ndata, int noisefiledirNo) {
-  // Nfile.open(MODELdir + Nfileprefix + std::to_string(NLnoise) + "_" + std::to_string(noisefiledirNo) + std::string(".dat"));
-  // std::vector<std::vector<double>> Ndata;
-  // if (Nfile.fail()) std::cout << "Nfile fail" << "\n";
-
-  // // データの読み込み
-  // double first, second;
-  // while (Nfile >> first >> second) {
-  //   Ndata.push_back({first, second});
-  // }
-  // Nfile.close();
-
-  // // データのソート
-  // std::sort(Ndata.begin(), Ndata.end(), compareByFirstColumn);
-
   powfile.open(MODELdir + powfileprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(noisefiledirNo) + std::string(".dat"));
   powfile << std::setprecision(10);
   std::vector<std::vector<std::vector<std::complex<double>>>> Nmap3D = std::vector<std::vector<std::vector<std::complex<double>>>>(NLnoise, std::vector<std::vector<std::complex<double>>>(NLnoise, std::vector<std::complex<double>>(NLnoise, 0)));
@@ -108,7 +101,7 @@ void spectrum_div(std::vector<std::vector<double>> Ndata, int noisefiledirNo) {
     int x=i/NLnoise/NLnoise ,y=(i%(NLnoise*NLnoise))/NLnoise, z=i%NLnoise;
     Nmap3D[x][y][z] = Ndata[i][1];
   }
-  std::vector<std::vector<std::vector<std::complex<double>>>> Nk=fft(Nmap3D);
+  std::vector<std::vector<std::vector<std::complex<double>>>> Nk=fft_fftw(Nmap3D);
   
   powsfile.open(MODELdir + powsfileprefix + std::string(".dat"), std::ios::app);
   powsfile << std::setprecision(10);
@@ -158,22 +151,6 @@ void spectrum_div(std::vector<std::vector<double>> Ndata, int noisefiledirNo) {
 
 // Calculate compaction function
 void compaction_div(std::vector<std::vector<double>> Ndata, int noisefiledirNo) {
-  // Nfile.open(MODELdir + Nfileprefix + std::to_string(NLnoise) + "_" + std::to_string(noisefiledirNo) + std::string(".dat"));
-  // std::vector<std::vector<double>> Ndata;
-  // std::vector<std::vector<std::vector<std::complex<double>>>> Nmap3D = std::vector<std::vector<std::vector<std::complex<double>>>>(NLnoise, std::vector<std::vector<std::complex<double>>>(NLnoise, std::vector<std::complex<double>>(NLnoise, 0)));
-  // if (Nfile.fail()) std::cout << "Nfile fail" << "\n";
-  // std::cout << MODELdir + Nfileprefix + std::to_string(NLnoise) + "_" + std::to_string(noisefiledirNo) << std::endl;
-
-  // // データの読み込み
-  // double first, second;
-  // while (Nfile >> first >> second) {
-  //   Ndata.push_back({first, second});
-  // }
-  // Nfile.close();
-
-  // // データのソート
-  // std::sort(Ndata.begin(), Ndata.end(), compareByFirstColumn);
-
   prbfile.open(MODELdir + prbfileprefix + std::string(".dat"), std::ios::app);
   cmpfile.open(MODELdir + cmpfileprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(noisefiledirNo) + std::string(".dat"));
   prbfile << std::setprecision(10);
