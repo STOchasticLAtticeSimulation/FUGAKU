@@ -54,9 +54,9 @@ public:
   bool noisebiassize();
   bool Nfilefail();
   
-  double VV(double phi);
-  double Vp(double phi);
-  bool EoI(std::vector<double> &phi);
+  double VV0(double phi);
+  double Vp0(double phi);
+  bool EoI0(std::vector<double> &phi);
  
   void dNmap(int noisefileNo);
   void animation();
@@ -64,10 +64,10 @@ public:
   void compaction();
   void weight();
 
-  double ep(double phi, double pi);
-  double hubble(double phi, double pi);
+  double ep0(double phi, double pi);
+  double hubble0(double phi, double pi);
 
-  std::vector<double> dphidN(double N, std::vector<double> phi);
+  std::vector<double> dphidN0(double N, std::vector<double> phi);
 
   void RK4(double &t, std::vector<double> &x, double dt);
 
@@ -75,9 +75,9 @@ public:
     double calPphi(std::vector<double> &phi);
     void RK4Mbias(double &N, std::vector<double> &phi, double dN, double dw, double Bias);
   #elif MODEL==1
-    double calPphi(double &N, std::vector<double> &phi, double N0, bool broken);
-    double calPpi(double &N, std::vector<double> &phi, double N0, bool broken);
-    double RecalPphipi(double &N, std::vector<double> &phi, double N0, bool broken);
+    double calPphi0(double &N, std::vector<double> &phi, double N0, bool broken);
+    double calPpi0(double &N, std::vector<double> &phi, double N0, bool broken);
+    double RecalPphipi0(double &N, std::vector<double> &phi, double N0, bool broken);
     void RK4Mbias(double &N, std::vector<double> &phi, double dN, double dw, double Bias, double N0, bool broken);
   #endif
 };

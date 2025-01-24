@@ -122,7 +122,6 @@ int main() {
 				if (epm1(xmid[0],xmid[1])>0) tr = tmid;
 				else tl = tmid;
 				prec_x = std::fabs(epm1(xmid[0],xmid[1]));
-				std::cout << prec_x << std::endl;
 			}
 
 			stepper.calc_state(tmid, xmid);
