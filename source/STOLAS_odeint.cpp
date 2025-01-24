@@ -3,10 +3,6 @@
 #include "fft.hpp"
 
 
-#include <unistd.h>
-
-int count = 0;
-bool first = true;
 // -- Odeint ------------------------------------
 #include <boost/numeric/odeint.hpp>
 
@@ -82,14 +78,8 @@ double RecalPphipi(double &N, std::vector<double> &phi, double N0, bool broken) 
 }
 
 // The condition at the end of inflation
-bool EoI(std::vector<double> &phi) {
-//   return ep(phi[0],phi[1]) <= 1;
-  return phi[0] >= phif;
-}
-
-double epm1(double phi, double pi) {
-  double HH = hubble(phi,pi);
-  return pi*pi/2./HH/HH - 1.;
+inline double EoI(state_type &phi) {
+  return phi[0] - phif;
 }
 
 
@@ -102,25 +92,6 @@ void dphidN(const state_type &x, state_type &dxdt, const double t) {
   dxdt[0] = pp/HH;
   dxdt[1] = -3*pp - Vp(xx)/HH;
 }
-
-// Observers
-void output_to_file(state_type &x, double t, std::ofstream &outfile) {
-	// if(output_step%10==0){
-	// 	outfile << t << " " << x[0] << " " << x[1] << " " << hubble(x[0],x[1]) << std::endl;
-	// }
-	// output_step++;
-}
-
-void AddNoise(state_type &phi, double t){
-  phi[0] += 0.0;//*dist(engine);
-}
-
-// void boolbroken(state_type &phi, bool broken){
-//   if (!broken && phi[0] < 0){
-//     N0 = N;
-//     broken = true;
-//   }
-// }
 
 // ----------------------------------------------
 
@@ -146,87 +117,45 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
 
   std::cout << "Noise file No. : " << noisefileNo << std::endl;
   
-  // noisefile.open(sourcedir + std::string("/") + noisefiledir + std::to_string(noisefiledirNo) + noisefilenamediv + std::to_string(noisefileNo) + std::string(".bin"));
   noisefile.open(sourcedir + std::string("/") + noisefiledir + std::to_string(noisefiledirNo) + noisefilenamediv + std::to_string(noisefileNo) + std::string(".bin"), std::ios::binary);
   noisefilefail = noisefile.fail();
-  // biasfile.open(sourcedir + std::string("/") + biasfilenamediv + std::to_string(noisefileNo) + std::string(".dat"));
   biasfile.open(sourcedir + std::string("/") + biasfilenamediv + std::to_string(noisefileNo) + std::string(".bin"), std::ios::binary);
   biasfilefail = biasfile.fail();
-
-  /*
-  int totalstep = ceil(log((NL/2-1)/sigma)/dN);
-  noisedata = std::vector<std::vector<double>>(NL*NL*NL/div, std::vector<double>(totalstep,0));
-  biasdata = std::vector<std::vector<double>>(NL*NL*NL/div, std::vector<double>(totalstep,0));
-  */
   
   if (!noisefile.fail() && !biasfile.fail()) {
     std::cout << "model : " << model << std::endl;
 
-    // std::string str;
-    // double dd;
-    // while (std::getline(noisefile, str)) {
-    //   std::vector<double> vv;
-    //   std::stringstream ss(str);
-    //   while (!ss.eof()) {
-	// ss >> dd;
-	// vv.push_back(dd);
-    //   }
-    //   vv.pop_back();
-    //   noisedata.push_back(vv);
-    // }
-
-  //   while (std::getline(biasfile, str)) {
-  //     std::vector<double> vv;
-  //     std::stringstream ss(str);
-  //     while (!ss.eof()) {
-	// ss >> dd;
-	// vv.push_back(dd);
-  //     }
-  //     vv.pop_back();
-  //     biasdata.push_back(vv);
-  //   }
-
-    int numElementsPerRow = ceil(log((NLnoise/2-1)/sigma)/dN);
+    int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN);
     while (true) {
-      std::vector<double> vv(numElementsPerRow);
-      noisefile.read(reinterpret_cast<char*>(vv.data()), numElementsPerRow * sizeof(double));
+      std::vector<double> vv(totalstep);
+      noisefile.read(reinterpret_cast<char*>(vv.data()), totalstep * sizeof(double));
 
       // EOFに到達して完全に読み込まれなかった場合を確認
-      if (noisefile.gcount() != numElementsPerRow * sizeof(double)) {
+      if (noisefile.gcount() != totalstep * sizeof(double)) {
         break; // 全行の読み込み完了または不完全な行をスキップ
       }
       noisedata.push_back(vv);
     }
 
     while (true) {
-      std::vector<double> vv(numElementsPerRow);
-      biasfile.read(reinterpret_cast<char*>(vv.data()), numElementsPerRow * sizeof(double));
+      std::vector<double> vv(totalstep);
+      biasfile.read(reinterpret_cast<char*>(vv.data()), totalstep * sizeof(double));
 
       // EOFに到達して完全に読み込まれなかった場合を確認
-      if (biasfile.gcount() != numElementsPerRow * sizeof(double)) {
+      if (biasfile.gcount() != totalstep * sizeof(double)) {
         break; // 全行の読み込み完了または不完全な行をスキップ
       }
       biasdata.push_back(vv);
     }
 
-    /*
-    for (size_t i = 0; i < NL*NL*NL/div; i++) {
-      noisefile.read(reinterpret_cast<char*>(noisedata[i].data()), totalstep * sizeof(double));
-      biasfile.read(reinterpret_cast<char*>(biasdata[i].data()), totalstep * sizeof(double));
-    }
-    */
-   
-    // NL = pow(2,5);//cbrt(noisedata.size());
+
     std::cout << "Noise/Bias data imported. Box size is " << NL << "." << std::endl;
-    // Nfile.open(Nfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
-    // Nfile.open(Noiseprefix + std::to_string(NoisefileDirNo) + Nfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
     Nfile.open(Noiseprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(NoisefileDirNo) + std::string(".dat"), std::ios::app);
     logwfile.open(logwfileprefix + std::to_string(NLnoise) + std::string(".dat"), std::ios::app);
 
     Hdata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL,0));
     pidata = std::vector<std::vector<double>>(noisedata[0].size(), std::vector<double>(NL,0));
     Ndata = std::vector<double>(NL,0);
-    // Nmap3D = std::vector<std::vector<std::vector<std::complex<double>>>>(NL, std::vector<std::vector<std::complex<double>>>(NL, std::vector<std::complex<double>>(NL, 0)));
   }
 }
 
@@ -250,81 +179,27 @@ bool STOLAS::Nfilefail() {
 
 void STOLAS::dNmap(int NoiseNo) {
   Nfile << std::setprecision(10);
-  // std::cout << std::setprecision(20);
   int complete = 0;
-  int Noisenum = ceil(log((NLnoise/2-1)/sigma)/dN);
-  double Nnoise = (double)Noisenum*dN;
+  int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN);
+  double Nnoise = (double)totalstep*dN;
   
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
   for (int i=0; i<NL; i++) {
     double N=0;
-    // bool first = true;
     int numstep = 0;
     #if MODEL==1
       double N0;
       bool broken = false;
     #endif
-    // std::vector<double> phi = phii;
     state_type phi = phii;
 
     // stepper
     boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
-    
-    // auto observer = [&](state_type &phi, double N) {
-      // output_to_file(phi, t, outfile);
-      // AddNoise(phi,t);
-      // boolbroken(phi, broken);
 
-      // if (first) {
-      //   first = false;
-      // }
-      // else {
-      // std::cout << numstep << std::endl;
-      // sleep(1);
 
-      // double phiamp = sqrt(calPphi(N,phi,N0,broken));
-      // double piamp = sqrt(calPpi(N,phi,N0,broken));
-      // double crosscor = RecalPphipi(N,phi,N0,broken);
-      // double dw = noisedata[i][numstep];
-      // double Bias = biasdata[i][numstep];
-      
-      // if(numstep==1) std::cout << " " << phi[0] << std::endl;
-      // if(numstep==2) std::cout << " " << phi[0] << "  2" << std::endl;
-      // phi[0] += 1.e-1*phiamp;// * dw * sqrt(dN);
-      // if(numstep==1) std::cout << " " << phi[0] << std::endl;
-
-      // phi[0] += phiamp * dw * sqrt(dN);
-      
-      // if (crosscor > 0) {
-      //   phi[1] += piamp * dw * sqrt(dN);
-      // } else {
-      //   phi[1] -= piamp * dw * sqrt(dN);
-      // }
-
-      // double GaussianFactor = 1./dNbias/sqrt(2*M_PI) * exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
-      // phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
-
-      // if (crosscor > 0) {
-      //   phi[1] += piamp * bias * Bias * GaussianFactor * dN;
-      // } else {
-      //   phi[1] -= piamp * bias * Bias * GaussianFactor * dN;
-      // }
-      // numstep++;
-
-      // if (!broken && phi[0] < 0) {
-      //   N0 = N;
-      //   broken = true;
-      // }
-    //   }
-    // };
-
-    // integrate_const(stepper_noise, dphidN, phi, 0., Nnoise, dN, observer);
-    // integrate_n_steps(stepper_noise, dphidN, phi, 0., dN, Noisenum, observer);
-    // std::cout << " " << phi[0] << std::endl;
-
-    for (size_t n=0; n<Noisenum; n++) {
+    for (size_t n=0; n<totalstep; n++) {
       if (sanimation) {
         Hdata[n][i] = pow(hubble(phi[0],phi[1]),2);
         pidata[n][i] = phi[1]*phi[1];
@@ -335,16 +210,9 @@ void STOLAS::dNmap(int NoiseNo) {
       
       double dw = noisedata[i][n];
       double Bias = biasdata[i][n];
-      // if (first) {
-      //   std::cout << " " << phiamp << std::endl;
-      // }
-    // sleep(2);
 
       stepper_noise.do_step(dphidN, phi, N, dN);
       N += dN;
-    //   std::cout << " " << sqrt(calPphi(N,phi,N0,broken)) << std::endl;
-    // sleep(1);
-      
       
       phi[0] += phiamp * dw * sqrt(dN);
 
@@ -363,64 +231,54 @@ void STOLAS::dNmap(int NoiseNo) {
         phi[1] -= piamp * bias * Bias * GaussianFactor * dN;
       }
 
-
-      // if (first) {
-      //   std::cout << " " << phi[0] << ' ' << N << std::endl;
-      //   first = false;
-      // }
-
       if (!broken && phi[0] < 0) {
         N0 = N;
         broken = true;
-        // std::cout << "happy " << N0 << std::endl;
       }
       
     }
-    // std::cout << "N0= " << N0 << std::endl;
 
-    // N = Nnoise;
 
-    // std::vector<double> phi2 = phi;
-    // phi = phii;
-    // broken = false;
-    // N0=0;
-    // N=0;
-    // first = true;
+    // Find zero crossing time
+    typedef boost::numeric::odeint::runge_kutta_dopri5<state_type>base_stepper_type;
+    auto stepper = make_dense_output(1.0e-7, 1.0e-7, base_stepper_type());
 
-    for (size_t n=0; n<noisedata[i].size(); n++) {
-      if (sanimation) {
-        Hdata[n][i] = pow(hubble(phi[0],phi[1]),2);
-        pidata[n][i] = phi[1]*phi[1];
-      }
+    stepper.initialize(phi, N, dN);
+    state_type prephi(2);
+    state_type phil(2);
+    state_type phir(2);
+    state_type phim(2);
+
+    while (true){
+      prephi = phi;
+      stepper.do_step(dphidN);
+      phi = stepper.current_state();
+      N = stepper.current_time();
       
-      #if MODEL==0
-        RK4Mbias(N,phi,dN,noisedata[i][n],biasdata[i][n]);
-      #elif MODEL==1
-        RK4Mbias(N,phi,dN,noisedata[i][n],biasdata[i][n],N0,broken);
-        if (!broken && phi[0] < 0) {
-          N0 = N;
-          broken = true;
+      if (EoI(phi)<0){
+        double precphi = 1.e+2;
+        double prec = 1.e-9;
+        double Nl = N;
+        double Nr = N - stepper.current_time_step();
+        double Nmid = 0;
+
+        while (precphi>prec){
+          stepper.calc_state(Nl, phil);
+          stepper.calc_state(Nr, phir);
+          Nmid = (Nl*EoI(phir) - Nr*EoI(phil)) / (EoI(phir)-EoI(phil));
+          stepper.calc_state(Nmid, phim);
+          if (EoI(phim)>0){
+            Nr = Nmid;
+          }
+          else {
+            Nl = Nmid;
+          }
+          precphi = std::fabs(EoI(phim));
         }
-      #endif
 
-    }
-    // std::cout << " " << phi[0]-phi2[0] << std::endl;
-    // sleep(5);
-
-
-    double dN1 = dN;
-    std::vector<double> prephi(2);
-    while (dN1 >= Nprec) {
-      while (EoI(phi)) {
-	prephi[0] = phi[0];
-	prephi[1] = phi[1];
-	RK4(N,phi,dN1);
+        N = Nmid;
+        break;
       }
-      N -= dN1;
-
-      phi[0] = prephi[0];
-      phi[1] = prephi[1];
-      dN1 *= 0.1;
     }
 
 #ifdef _OPENMP
@@ -436,8 +294,6 @@ void STOLAS::dNmap(int NoiseNo) {
   std::cout << std::endl;
 
 }
-
-
 
 
 
@@ -507,33 +363,7 @@ void STOLAS::RK4Mbias(double &N, std::vector<double> &phi, double dN, double dw,
   double piamp = sqrt(calPpi(N,phi,N0,broken));
   double crosscor = RecalPphipi(N,phi,N0,broken);
 
-  // if (first) {
-  //   std::cout << " " << phiamp << std::endl;
-  // }
-
   RK4(N,phi,dN);
-
-
-    //   std::cout << " " << sqrt(calPphi(N,phi,N0,broken)) << std::endl;
-    // sleep(1);
-  // if (count==0) {
-  //   std::cout << " " << phi[0] << std::endl;
-  //   count++;
-  // }
-  // if (count==2) {
-  //   std::cout << " " << phi[0] << "  2" << std::endl;
-  //   count++;
-  // }
-  // phi[0] += phiamp * dw * sqrt(dN);
-  // if (first) {
-  //       std::cout << " " << phi[0] << std::endl;
-  //       first = false;
-  //     }
-  // if (count==1) {
-  //   std::cout << " " << phi[0] << std::endl;
-  //   count++;
-  // }
-
 
   phi[0] += phiamp * dw * sqrt(dN);
 
@@ -595,159 +425,3 @@ double STOLAS::ep0(double phi, double pi) {
 double STOLAS::hubble0(double phi, double pi) {
   return sqrt((pi*pi/2. + VV(phi))/3.);
 }
-
-// // Calculate power spectrum
-// void STOLAS::spectrum() {
-//   powfile.open(powfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
-//   powfile << std::setprecision(10);
-//   for (int i=0; i<NL*NL*NL; i++) {
-//     int x=i/NL/NL ,y=(i%(NL*NL))/NL, z=i%NL;
-//     Nmap3D[x][y][z] = Ndata[i];
-//   }
-//   std::vector<std::vector<std::vector<std::complex<double>>>> Nk=fft(Nmap3D);
-  
-//   powsfile.open(powsfileprefix + std::string(".dat"), std::ios::app);
-//   powsfile << std::setprecision(10);
-//   int imax = ceil(log(NL/2)/dlogn);
-//   std::vector<double> disc_power(imax, 0);
-
-//   LOOP{
-//     int nxt, nyt, nzt; // shifted index
-//     if (i<=NL/2) {
-//       nxt = i;
-//     } else {
-//       nxt = i-NL;
-//     }
-
-//     if (j<=NL/2) {
-//       nyt = j;
-//     } else {
-//       nyt = j-NL;
-//     }
-
-//     if (k<=NL/2) {
-//       nzt = k;
-//     } else {
-//       nzt = k-NL;
-//     }
-    
-//     double rk=nxt*nxt+nyt*nyt+nzt*nzt;
-//     powfile << sqrt(rk) << " " << norm(Nk[i][j][k])/NL/NL/NL/NL/NL/NL << std::endl;
-
-//     double LogNk = log(sqrt(rk));
-//     double calPk = norm(Nk[i][j][k])/NL/NL/NL/NL/NL/NL;
-//     for (size_t ii = 0; ii < imax; ii++) {
-//       if (std::abs(dlogn*ii-LogNk)<=dlogn/2.) {
-//         disc_power[ii] += calPk/dlogn;
-//         break;
-//       }
-//     }
-//   }
-//   powsfile << noisefileNo << " ";
-//   for (size_t ii = 0; ii < imax; ii++) {
-//     powsfile << disc_power[ii] << " " ;
-//   }
-//   powsfile << std::endl;
-//   std::cout << "ExportPowerSpectrum" << std::endl;
-// }
-
-// // Calculate compaction function
-// void STOLAS::compaction() {
-//   prbfile.open(prbfileprefix + std::string(".dat"), std::ios::app);
-//   cmpfile.open(cmpfileprefix + std::to_string(NL) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
-//   prbfile << std::setprecision(10);
-//   cmpfile << std::setprecision(10);
-
-//   // calculation of weight
-//   // double logw = 0.;
-//   // for (size_t n=0; n<noisedata[0].size(); n++) {
-//   //   double N = n*dN;
-//   //   double Bias = bias/dNbias/sqrt(2*M_PI)*exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
-//   //   logw -= Bias*noisedata[0][n]*sqrt(dN) + (Bias*Bias*dN)/2;
-//   // }
-
-//   double Naverage = 0;
-//   int dr = 1;
-//   for (size_t n = 0; n < Ndata.size(); n++) {
-//     Naverage += Ndata[n];
-//   }
-//   Naverage /= NL*NL*NL;
-
-//   // zeta map
-//   for (size_t n = 0; n < Ndata.size(); n++) {
-//     Ndata[n] -= Naverage;
-//   }
-
-//   // radial profile
-//   std::vector<std::vector<double>> zetar(2, std::vector<double>(NL/2,0));
-//   for (size_t i=0; i<NL*NL*NL; i++) {
-//     int nx=i/NL/NL ,ny=(i%(NL*NL))/NL, nz=i%NL;
-
-//     // centering
-//     if (nx<=NL/2) {
-//       nx = nx;
-//     }
-//     else {
-//       nx = nx-NL;
-//     }
-//     if (ny<=NL/2) {
-//       ny = ny;
-//     }
-//     else {
-//       ny = ny-NL;
-//     }
-//     if (nz<=NL/2) {
-//       nz = nz;
-//     }
-//     else {
-//       nz = nz-NL;
-//     }
-
-//     for (size_t ri=0; ri<NL/2; ri++) {
-//       double norm = std::abs(sqrt(nx*nx+ny*ny+nz*nz)-ri);
-//       if (norm<=dr/2.) {
-//         zetar[0][ri]++;
-//         zetar[1][ri]+=Ndata[i];
-//         break;
-//       }
-//     }
-//   }
-//   for (size_t ri=0; ri<NL/2; ri++) {
-//     zetar[1][ri] /= zetar[0][ri]; // average
-//   }
-
-//   // derivative zeta
-//   std::vector<double> dzetar(NL/2,0);
-//   for (size_t ri=1; ri<NL/2-1; ri++) {
-//     dzetar[ri] = (zetar[1][ri+1] - zetar[1][ri-1])/(2.*dr);
-//   }
-
-//   // compaction function
-//   double CompactionMax=0, CompactionInt=0, rmax=0, Rmax=0, IntTemp=0;
-//   bool Cnegative = false;
-//   for (size_t ri=0; ri<NL/2; ri++) {
-//     double CompactionTemp = 2./3.*(1. - pow(1 + ri*dzetar[ri], 2));
-//     IntTemp += ri*ri*CompactionTemp*exp(3.*zetar[1][ri])*(1 + ri*dzetar[ri]);
-
-//     if (!Cnegative) {
-//       if (CompactionTemp < -0.2) {
-// 	Cnegative = true;
-//       }
-      
-//       if (CompactionMax<CompactionTemp) {
-// 	CompactionMax = CompactionTemp;
-// 	rmax = ri;
-// 	Rmax = exp(zetar[1][ri])*ri;
-// 	CompactionInt += IntTemp;
-// 	IntTemp = 0;
-//       }
-//     }
-    
-//     cmpfile << ri << ' ' << CompactionTemp << std::endl;
-//   }
-//   CompactionInt /= pow(Rmax, 3)/3.;
-
-//   prbfile << noisefileNo //<< ' ' << logw 
-//   << ' ' << CompactionInt << ' ' << CompactionMax << ' ' << Rmax << ' ' << rmax << std::endl;
-//   std::cout << "ExportCompactionFunction" << std::endl;
-// }
