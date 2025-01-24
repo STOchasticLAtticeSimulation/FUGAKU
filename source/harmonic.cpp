@@ -1,0 +1,119 @@
+// g++ -std=c++14 -O2 -I/opt/homebrew/opt/boost/include harmonic.cpp -o harmonic
+
+#include <boost/numeric/odeint.hpp>
+#include <vector>
+#include <cmath>
+#include <random>
+#include <iostream>
+#include <fstream>
+
+std::random_device seed;
+std::mt19937 engine(seed());
+std::normal_distribution<> dist(0., 1.);
+
+bool first = true;
+
+// type
+typedef std::vector<double> state_type;
+
+// EoM
+void harmonic_oscillator(const state_type &x, state_type &dxdt, const double t) {
+  const double omega = 1.;
+  dxdt[0] = x[1];
+  dxdt[1] = -omega * omega * x[0];
+}
+
+// Observers
+void output_to_file(state_type &x, double t, std::ofstream &outfile) {
+  outfile << t << " " << x[0] << " " << x[1] << std::endl;
+}
+
+void AddNoise(state_type &x, double t) {
+	// if (first)
+	x[0] += 5.e-5;
+	// std::cout << "dot" << std::endl;
+}
+
+
+int main() {
+  std::ofstream outfile("harmonic_oscillator.dat");
+  outfile << std::setprecision(20);
+
+  state_type x(2);
+  x[0] = 1.0;
+  x[1] = 0.0;
+
+  // time
+	double ti = 0.0;
+  double tnoise = 10.0;
+  double tend = 10.0;
+  double t = ti;
+  double dt = 0.01;
+
+  // stepper
+	boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
+	// auto stepperN = make_dense_output(1.0e-7, 1.0e-7, stepper_nosee());
+
+	int dnum=0;
+	auto observer = [&outfile, &dnum](state_type &x, double t) {
+		if(dnum==0) {dnum=1;
+		std::cout << dnum << std::endl;}
+		else AddNoise(x,t);
+		
+  	output_to_file(x, t, outfile);
+  };
+	
+    // outfile << t << ' ' << x[0] << ' ' << x[1] << std::endl;
+	integrate_const(stepper_noise, harmonic_oscillator, x, ti, tnoise, dt, observer);
+    // integrate_n_steps(stepper_noise, harmonic_oscillator, x, ti, dt, 1000, observer);
+
+// 	while (t<tend) {
+//     std::cout << t << ' ' << x[0] << ' ' << x[1] << std::endl;
+//     outfile << t << ' ' << x[0] << ' ' << x[1] << std::endl;
+    
+//     stepper_noise.do_step(harmonic_oscillator, x, ti, dt);
+// 	t += dt;
+//     x[0] += 0.000005;
+//   }
+
+	// Find 0 crossing time
+	// typedef boost::numeric::odeint::runge_kutta_dopri5<state_type>base_stepper_type;
+	// auto stepper = make_dense_output(1.0e-7, 1.0e-7, base_stepper_type());
+
+	// stepper.initialize(x, tnoise, dt);
+	// state_type xrev(2);
+	// state_type xbefore(2);
+	// state_type xafter(2);
+	// state_type xmid(2);
+
+	// while (t<tend){
+	// 	xrev = x;
+	// 	stepper.do_step(harmonic_oscillator);
+	// 	x = stepper.current_state();
+	// 	t = stepper.current_time();
+	// 	if (xrev[0]*x[0]<0){
+	// 		double prec_x = 10.;
+	// 		double prec = 1.e-7;
+	// 		double tl = t - stepper.current_time_step();
+	// 		double tr = t;
+	// 		double tmid = 0;
+	// 		while (prec_x>prec){
+	// 			stepper.calc_state(tl, xbefore);
+	// 			stepper.calc_state(tr, xafter);
+	// 			tmid = (tl*xafter[0]-tr*xbefore[0]) / (xafter[0]-xbefore[0]);
+	// 			stepper.calc_state(tmid, xmid);
+	// 			if (xmid[0]>0) tr = tmid;
+	// 			else tl = tmid;
+	// 			prec_x = std::fabs(xmid[0]);
+	// 		}
+
+	// 		stepper.calc_state(tmid, xmid);
+	// 		outfile << tmid << " " << xmid[0] << " " << xmid[1] << std::endl;
+	// 		break;
+	// 	}
+
+	// 	outfile << t << " " << x[0] << " " << x[1] << std::endl;
+	// 	}
+
+    return 0;
+}

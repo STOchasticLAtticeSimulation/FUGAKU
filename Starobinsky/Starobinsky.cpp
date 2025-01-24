@@ -13,7 +13,7 @@ const std::vector<double> phii{0.0193,-5.45e-7}; // Initial conditions {field,de
 const double phif = -0.0187; // The inflaton value at the end of inflation
 
 // Potential
-double STOLAS::VV(double phi) {
+double STOLAS::VV0(double phi) {
   if (phi > 0) {
     return V0 + Ap*phi;
   } else {
@@ -22,7 +22,7 @@ double STOLAS::VV(double phi) {
 }
 
 // Derivative
-double STOLAS::Vp(double phi) {
+double STOLAS::Vp0(double phi) {
   if (phi > 0) {
     return Ap;
   } else {
@@ -31,12 +31,12 @@ double STOLAS::Vp(double phi) {
 }
 
 // Power spectrum of phi
-double STOLAS::calPphi(double &N, std::vector<double> &phi, double N0, bool broken) {
+double STOLAS::calPphi0(double &N, std::vector<double> &phi, double N0, bool broken) {
   if (!broken) {
-    return pow(hubble(phi[0],phi[1])/2./M_PI,2);
+    return pow(hubble0(phi[0],phi[1])/2./M_PI,2);
   } else {
     double alpha = exp(N-N0);
-    return pow(hubble(phi[0],phi[1])/2./M_PI,2) *
+    return pow(hubble0(phi[0],phi[1])/2./M_PI,2) *
       ((1 + pow(sigma,2))*(9*pow(1 + pow(alpha,2)*pow(sigma,2),2) - 
 				18*Lambda*pow(1 + pow(alpha,2)*pow(sigma,2),2) + 
 				pow(Lambda,2)*(9 + 18*pow(alpha,2)*pow(sigma,2) + 9*pow(alpha,4)*pow(sigma,4) + 
@@ -56,17 +56,17 @@ double STOLAS::calPphi(double &N, std::vector<double> &phi, double N0, bool brok
 }
 
 // The power spectrum of pi
-double STOLAS::calPpi(double &N, std::vector<double> &phi, double N0, bool broken) {
+double STOLAS::calPpi0(double &N, std::vector<double> &phi, double N0, bool broken) {
   return 0;
 }
 
 // Cross correlation of phi and pi
-double STOLAS::RecalPphipi(double &N, std::vector<double> &phi, double N0, bool broken) {
+double STOLAS::RecalPphipi0(double &N, std::vector<double> &phi, double N0, bool broken) {
   return 1;
 }
 
 // The condition at the end of inflation
-bool STOLAS::EoI(std::vector<double> &phi) {
+bool STOLAS::EoI0(std::vector<double> &phi) {
 //   return ep(phi[0],phi[1]) <= 1;
   return phi[0] >= phif;
 }
