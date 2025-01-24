@@ -244,20 +244,18 @@ void STOLAS::dNmap(int NoiseNo) {
     auto stepper = make_dense_output(1.0e-7, 1.0e-7, base_stepper_type());
 
     stepper.initialize(phi, N, dN);
-    state_type prephi(2);
     state_type phil(2);
     state_type phir(2);
     state_type phim(2);
 
     while (true){
-      prephi = phi;
       stepper.do_step(dphidN);
       phi = stepper.current_state();
       N = stepper.current_time();
       
       if (EoI(phi)<0){
         double precphi = 1.e+2;
-        double prec = 1.e-9;
+        double prec = 1.e-7;
         double Nl = N;
         double Nr = N - stepper.current_time_step();
         double Nmid = 0;
