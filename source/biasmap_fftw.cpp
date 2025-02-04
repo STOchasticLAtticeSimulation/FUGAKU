@@ -5,11 +5,22 @@ std::vector<double> biaslist_fftw(double N);
 
 int main() 
 {
-  std::ofstream ofs(biasfilename);
+  // std::ofstream ofs(biasfilename);
   // std::ofstream ofs("biasdata/biasmap" + std::string(".bin"), std::ios::out | std::ios::binary);
-  if (ofs.fail()) {
-    std::cout << "The bias file couldn't be opened. 'mkdir biasdata'" << std::endl;
-    return -1;
+  // if (ofs.fail()) {
+  //   std::cout << "The bias file couldn't be opened. 'mkdir biasdata'" << std::endl;
+  //   return -1;
+  // }
+
+  std::vector<std::unique_ptr<std::ofstream>> ofs_vector;
+  for (int i = 0; i < totalnoiseNo; ++i) {
+    std::string filename = biasfilename + "_" + std::to_string(i) + ".dat";
+    ofs_vector.emplace_back(std::make_unique<std::ofstream>(filename));
+        
+    if (!ofs_vector.back()->is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return 1;
+    }
   }
 
   
@@ -61,16 +72,28 @@ fftw_init_threads();
     }
     std::cout << std::endl;
     
-    for (size_t n=0; n<biasdata.size(); n++) {
+    // for (size_t n=0; n<biasdata.size(); n++) {
 
       // for (size_t i=0; i<biasdata[0].size(); i++) {
       //   if (l<totalnoiseNo || n<modstep) ofs << biasdata[n][i] << ' ';
       // }
       // if (l<totalnoiseNo || n<modstep) ofs << std::endl;
 
-      ofs.write(reinterpret_cast<const char*>(biasdata[n].data()), biasdata[n].size()*sizeof(double));
+      // ofs.write(reinterpret_cast<const char*>(biasdata[n].data()), biasdata[n].size()*sizeof(double));
 
-      std::cout << "\rExporting :      " << std::setw(3) << 100*n/biasdata.size() << "%" << std::flush;
+      // std::cout << "\rExporting :      " << std::setw(3) << 100*n/biasdata.size() << "%" << std::flush;
+    // }
+
+    for (size_t n=0; n<biasdata.size(); n++) {
+      int divcount=0;
+      for (size_t m=0; m<biasdata[0].size(); m++) {
+        *ofs_vector[divcount] << biasdata[n][m] << ' ';
+        if ((m+1)%NL==0) {
+          *ofs_vector[divcount] << std::endl;
+          divcount++;
+        }
+      }
+      std::cout << "\rExporting : " << std::setw(3) << 100*n/biasdata[0].size() << "%" << std::flush;
     }
     std::cout << "\rExporting :      100%" << std::endl;
   }
