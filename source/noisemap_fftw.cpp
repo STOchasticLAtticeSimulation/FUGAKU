@@ -10,11 +10,25 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  std::ofstream ofs(noisefilename + std::string(argv[1]) + //std::string(".dat"));
-		    std::string(".bin"), std::ios::out | std::ios::binary);//, std::ios::app);
-  if (ofs.fail()) {
-    std::cout << "The noise file couldn't be opened. 'mkdir noisedata'" << std::endl;
-    return -1;
+  // std::ofstream ofs(noisefilename + std::string(argv[1]) + //std::string(".dat"));
+	// 	    std::string(".bin"), std::ios::out | std::ios::binary);//, std::ios::app);
+
+
+  // std::ofstream ofs(noisefilename + std::string(argv[1]) + std::string(".dat"));
+  // if (ofs.fail()) {
+  //   std::cout << "The noise file couldn't be opened. 'mkdir noisedata'" << std::endl;
+  //   return -1;
+  // }
+
+  std::vector<std::unique_ptr<std::ofstream>> ofs_vector;
+  for (int i = 0; i < totalnoiseNo; ++i) {
+    std::string filename = noisefilename + std::string(argv[1]) + "_" + std::to_string(i) + ".dat";
+    ofs_vector.emplace_back(std::make_unique<std::ofstream>(filename));
+        
+    if (!ofs_vector.back()->is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return 1;
+    }
   }
 
   
@@ -63,13 +77,26 @@ fftw_init_threads();
     }
     std::cout << std::endl;
 
-    for (size_t n=0; n<noisedata.size(); n++) {      
-      ofs.write(reinterpret_cast<const char*>(noisedata[n].data()), noisedata[n].size()*sizeof(double));
+    // for (size_t n=0; n<noisedata.size(); n++) {
+    //   ofs.write(reinterpret_cast<const char*>(noisedata[n].data()), noisedata[n].size()*sizeof(double));
       
-      std::cout << "\rExporting :       " << std::setw(3) << 100*n/noisedata.size() << "%" << std::flush;
+    //   std::cout << "\rExporting :       " << std::setw(3) << 100*n/noisedata.size() << "%" << std::flush;
+    // }
+
+    for (size_t n=0; n<noisedata.size(); n++) {
+      int divcount=0;
+      for (size_t m=0; m<noisedata[0].size(); m++) {
+        *ofs_vector[divcount] << noisedata[n][m] << ' ';
+        if ((m+1)%NL==0) {
+          *ofs_vector[divcount] << std::endl;
+          divcount++;
+        }
+      }
+      std::cout << "\rExporting : " << std::setw(3) << 100*n/noisedata[0].size() << "%" << std::flush;
     }
+
     std::cout << "\rExporting :       100%" << std::endl;
-    
+
   }
 
   // ---------- stop timer ----------

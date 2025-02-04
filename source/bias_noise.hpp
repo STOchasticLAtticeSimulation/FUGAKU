@@ -19,8 +19,12 @@
 const std::complex<double> II(0,1);
 
 // random distribution
-std::random_device seed;
-std::mt19937 engine(seed());
+// std::random_device seed;
+// std::mt19937 engine(seed());
+// std::normal_distribution<> dist(0., 1.);
+
+// Fixed seed
+std::mt19937 engine(12345);
 std::normal_distribution<> dist(0., 1.);
 
 // useful macro

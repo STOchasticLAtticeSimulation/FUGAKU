@@ -8,7 +8,7 @@ CXX := g++
 #CXX := icpc
 
 #CXXFLAGS := -std=c++11 -O2 -fopenmp
-CXXFLAGS := -std=c++11 -O2 -Xpreprocessor -fopenmp -lomp -lfftw3_threads -lfftw3 -lm
+CXXFLAGS := -std=c++14 -O2 -Xpreprocessor -fopenmp -lomp -lfftw3_threads -lfftw3 -lm
 #CXXFLAGS := -std=c++11 -O2 -qopenmp
 
 LDFLAGS := -L/opt/homebrew/opt/libomp/lib
