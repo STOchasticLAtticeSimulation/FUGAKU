@@ -10,14 +10,12 @@
 typedef std::vector<double> state_type;
 
 // Model parameters
-const std::string model = "Starobinsky"; // Name of the model
 const double H0 = 1e-5; // Hubble parameter of broken point
 const double calPRIR = 8.5e-10; // Amplitude of curvature perturbation
 const double Lambda = 1700; // Ratio between Ap to Am
 const double Ap = sqrt(9./4/M_PI/M_PI*H0*H0*H0*H0*H0*H0/calPRIR); // Gradient of the potential at first stage
 const double Am = Ap/Lambda; // Gradient of the potential at second stage
 const double V0 = 3*H0*H0; // Amplitude of flat potential
-const std::vector<double> phii{0.0193,-5.45e-7}; // Initial conditions {field,derivative}
 const double phif = -0.0187; // The inflaton value at the end of inflation
 
 // Potential
@@ -295,95 +293,6 @@ void STOLAS::dNmap(int NoiseNo) {
 
 
 
-std::vector<double> STOLAS::dphidN0(double N, std::vector<double> phi) {
-  std::vector<double> dphidN(2);
-
-  double xx = phi[0]; // phi
-  double pp = phi[1]; // pi
-  double HH = hubble(xx,pp);
-
-  dphidN[0] = pp/HH;
-  dphidN[1] = -3*pp - Vp(xx)/HH;
-  
-  return dphidN;
-}
-
-void STOLAS::RK4(double &t, std::vector<double> &x, double dt) {
-  std::vector<double> kx[4]; // 4-stage slopes kx
-  double a[4][4],b[4],c[4]; // Butcher
-
-  // -------------- initialise kx, a, b, c --------------- //
-  for (int i=0;i<=3;i++) {
-    kx[i] = x;
-    vec_op::init(kx[i]);
-    
-    for (int j=0;j<=3;j++) {
-      a[i][j]=0.;
-    }
-  }
-  
-  a[1][0]=1./2;  a[2][1]=1./2;  a[3][2]=1.;
-  b[0]=1./6;     b[1]=1./3;     b[2]=1./3;    b[3]=1./6; 
-  c[0]=0;        c[1]=1./2;     c[2]=1./2;    c[3]=1;
-  // ----------------------------------------------------- //
-  
-
-  std::vector<double> X = x; // position at i-stage
-    
-  for (int i=0;i<=3;i++) {
-    X = x; // initialise X
-    
-    for (int j=0;j<=3;j++) {
-      X += dt * a[i][j] * kx[j];
-      kx[i] = dphidN0(t,X);
-    }
-  }
-
-  t += dt;
-  x += dt*(b[0]*kx[0] + b[1]*kx[1] + b[2]*kx[2] + b[3]*kx[3]);
-}
-
-#if MODEL==0
-void STOLAS::RK4Mbias(double &N, std::vector<double> &phi, double dN, double dw, double Bias) {
-  double phiamp = sqrt(calPphi(phi));
-
-  RK4(N,phi,dN);
-  phi[0] += phiamp * dw * sqrt(dN);
-
-  double GaussianFactor = 1./dNbias/sqrt(2*M_PI) * exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
-  phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
-}
-#elif MODEL==1
-void STOLAS::RK4Mbias(double &N, std::vector<double> &phi, double dN, double dw, double Bias,
-                      double N0, bool broken) {
-  
-  double phiamp = sqrt(calPphi(N,phi,N0,broken));
-  double piamp = sqrt(calPpi(N,phi,N0,broken));
-  double crosscor = RecalPphipi(N,phi,N0,broken);
-
-  RK4(N,phi,dN);
-
-  phi[0] += phiamp * dw * sqrt(dN);
-
-  if (crosscor > 0) {
-    phi[1] += piamp * dw * sqrt(dN);
-  } else {
-    phi[1] -= piamp * dw * sqrt(dN);
-  }
-
-  double GaussianFactor = 1./dNbias/sqrt(2*M_PI) * exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
-  phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
-
-  if (crosscor > 0) {
-    phi[1] += piamp * bias * Bias * GaussianFactor * dN;
-  } else {
-    phi[1] -= piamp * bias * Bias * GaussianFactor * dN;
-  }
-}
-#endif
-
-
-
 // calculation of weight
 void STOLAS::weight() {
   double logw = 0.;
@@ -412,14 +321,4 @@ void STOLAS::animation() {
     std::cout << "\rAnimeDataExporting : " << std::setw(3) << 100*(n+1)/Hdata.size() << "%" << std::flush;
   }
   std::cout << std::endl;
-}
-
-
-double STOLAS::ep0(double phi, double pi) {
-  double HH = hubble(phi,pi);
-  return pi*pi/2./HH/HH;
-}
-
-double STOLAS::hubble0(double phi, double pi) {
-  return sqrt((pi*pi/2. + VV(phi))/3.);
 }

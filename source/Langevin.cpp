@@ -82,14 +82,50 @@ int main() {
   // stepper
 	boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
 
-	auto observer = [&outfile](state_type &x, double t) {
-  	output_to_file(x, t, outfile);
-		AddNoise(x,t);
-  };
+// 	auto observer = [&outfile](state_type &x, double t) {
+//   	output_to_file(x, t, outfile);
+// 		AddNoise(x,t);
+//   };
 	
-	integrate_const(stepper_noise, dphidN, x, ti, tnoise, dt, observer);
+// 	integrate_const(stepper_noise, dphidN, x, ti, tnoise, dt, observer);
 
-	std::cout << "Noise end" << std::endl;
+// 	std::cout << "Noise end" << std::endl;
+
+	while(t<tnoise) {
+    //   double phiamp = sqrt(calPphi(N,phi,N0,broken));
+    //   double piamp = sqrt(calPpi(N,phi,N0,broken));
+    //   double crosscor = RecalPphipi(N,phi,N0,broken);
+      
+    //   double dw = noisedata[i][n];
+    //   double Bias = biasdata[i][n];
+
+	  outfile << t << " " << x[0] << " " << x[1] << " " << hubble(x[0],x[1]) << std::endl;
+
+    stepper_noise.do_step(dphidN, x, t, dt);
+	  t += dt;
+      
+    //   phi[0] += phiamp * dw * sqrt(dN);
+
+    //   if (crosscor > 0) {
+    //     phi[1] += piamp * dw * sqrt(dN);
+    //   } else {
+    //     phi[1] -= piamp * dw * sqrt(dN);
+    //   }
+
+    //   double GaussianFactor = 1./dNbias/sqrt(2*M_PI) * exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
+    //   phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
+
+    //   if (crosscor > 0) {
+    //     phi[1] += piamp * bias * Bias * GaussianFactor * dN;
+    //   } else {
+    //     phi[1] -= piamp * bias * Bias * GaussianFactor * dN;
+    //   }
+
+	
+
+    }
+
+
 
 	// Find 0 crossing time
 	typedef boost::numeric::odeint::runge_kutta_dopri5<state_type>base_stepper_type;
@@ -130,7 +166,7 @@ int main() {
 		}
 
 		outfile << t << " " << x[0] << " " << x[1] << " " << hubble(x[0],x[1]) << std::endl;
-		}
+	}
 
   return 0;
 }
