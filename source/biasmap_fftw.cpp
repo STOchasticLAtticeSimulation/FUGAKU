@@ -14,8 +14,8 @@ int main()
 
   std::vector<std::unique_ptr<std::ofstream>> ofs_vector;
   for (int i = 0; i < totalnoiseNo; ++i) {
-    std::string filename = biasfilename + "_" + std::to_string(i) + ".dat";
-    ofs_vector.emplace_back(std::make_unique<std::ofstream>(filename));
+    std::string filename = biasfilename + "_" + std::to_string(i) + ".bin";
+    ofs_vector.emplace_back(std::make_unique<std::ofstream>(filename, std::ios::out | std::ios::binary));
         
     if (!ofs_vector.back()->is_open()) {
         std::cerr << "Failed to open file: " << filename << std::endl;
@@ -87,9 +87,10 @@ fftw_init_threads();
     for (size_t n=0; n<biasdata.size(); n++) {
       int divcount=0;
       for (size_t m=0; m<biasdata[0].size(); m++) {
-        *ofs_vector[divcount] << biasdata[n][m] << ' ';
+        // *ofs_vector[divcount] << biasdata[n][m] << ' ';
+        ofs_vector[divcount]->write(reinterpret_cast<const char*>(&biasdata[n][m]), sizeof(double));
         if ((m+1)%NL==0) {
-          *ofs_vector[divcount] << std::endl;
+          // *ofs_vector[divcount] << std::endl;
           divcount++;
         }
       }
