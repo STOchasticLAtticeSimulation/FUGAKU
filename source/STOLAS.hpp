@@ -41,7 +41,7 @@ protected:
   std::ifstream noisefile, biasfile;
   std::ofstream Nfile, Hfile, pifile, powfile, cmpfile, prbfile, powsfile, logwfile;
   std::vector<double> phii;
-  std::vector<std::vector<double>> noisedata, biasdata, Hdata, pidata;
+  std::vector<std::vector<double>> noisedata, noisedataTr, biasdata, biasdataTr, Hdata, pidata;
   std::vector<double> Ndata;
   std::vector<std::vector<std::vector<std::complex<double>>>> Nmap3D;
 

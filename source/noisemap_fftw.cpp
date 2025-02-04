@@ -23,7 +23,6 @@ int main(int argc, char* argv[])
   std::vector<std::unique_ptr<std::ofstream>> ofs_vector;
   for (int i = 0; i < totalnoiseNo; ++i) {
     std::string filename = noisefiledir + std::string(argv[1]) + noisefilenamediv + std::to_string(i) + ".bin";
-    std::cout << filename << std::endl;
     ofs_vector.emplace_back(std::make_unique<std::ofstream>(filename, std::ios::out | std::ios::binary));
         
     if (!ofs_vector.back()->is_open()) {

@@ -2,6 +2,21 @@
 #include "vec_op.hpp"
 #include "fft.hpp"
 
+// -- Transpose ---------------------------------
+std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>>& matrix) {
+  if (matrix.empty() || matrix[0].empty()) return {}; // 空の場合の処理
+
+  size_t rows = matrix.size();
+  size_t cols = matrix[0].size();
+  std::vector<std::vector<double>> result(cols, std::vector<double>(rows));
+
+  for (size_t i = 0; i < rows; i++) {
+    for (size_t j = 0; j < cols; j++) {
+      result[j][i] = matrix[i][j];
+    }
+  }
+  return result;
+}
 
 // -- Odeint ------------------------------------
 #include <boost/numeric/odeint.hpp>
@@ -125,26 +140,30 @@ STOLAS::STOLAS(std::string Model, double DN, std::string sourcedir, int Noisefil
 
     int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN);
     while (true) {
-      std::vector<double> vv(totalstep);
-      noisefile.read(reinterpret_cast<char*>(vv.data()), totalstep * sizeof(double));
+      std::vector<double> vv(NL);
+      noisefile.read(reinterpret_cast<char*>(vv.data()), NL * sizeof(double));
 
       // EOFに到達して完全に読み込まれなかった場合を確認
-      if (noisefile.gcount() != totalstep * sizeof(double)) {
+      if (noisefile.gcount() != NL * sizeof(double)) {
         break; // 全行の読み込み完了または不完全な行をスキップ
       }
-      noisedata.push_back(vv);
+      noisedataTr.push_back(vv);
     }
+    noisedata = transpose(noisedataTr);
+    noisedataTr.clear();
 
     while (true) {
-      std::vector<double> vv(totalstep);
-      biasfile.read(reinterpret_cast<char*>(vv.data()), totalstep * sizeof(double));
+      std::vector<double> vv(NL);
+      biasfile.read(reinterpret_cast<char*>(vv.data()), NL * sizeof(double));
 
       // EOFに到達して完全に読み込まれなかった場合を確認
-      if (biasfile.gcount() != totalstep * sizeof(double)) {
+      if (biasfile.gcount() != NL * sizeof(double)) {
         break; // 全行の読み込み完了または不完全な行をスキップ
       }
-      biasdata.push_back(vv);
+      biasdataTr.push_back(vv);
     }
+    biasdata = transpose(biasdataTr);
+    biasdataTr.clear();
 
 
     std::cout << "Noise/Bias data imported. Box size is " << NL << "." << std::endl;
