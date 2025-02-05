@@ -19,13 +19,13 @@
 const std::complex<double> II(0,1);
 
 // random distribution
-// std::random_device seed;
-// std::mt19937 engine(seed());
-// std::normal_distribution<> dist(0., 1.);
+std::random_device seed;
+std::mt19937 engine(seed());
+std::normal_distribution<> dist(0., 1.);
 
 // Fixed seed
-std::mt19937 engine(12345);
-std::normal_distribution<> dist(0., 1.);
+// std::mt19937 engine(12345);
+// std::normal_distribution<> dist(0., 1.);
 
 // useful macro
 #define LOOP for(int i = 0; i < NLnoise; i++) for(int j = 0; j < NLnoise; j++) for(int k = 0; k < NLnoise; k++)
