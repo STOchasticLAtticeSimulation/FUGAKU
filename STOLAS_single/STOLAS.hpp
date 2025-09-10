@@ -54,7 +54,7 @@ bool noisebiassize();
 bool checkNfilefail();
  
 void dNmap(int noisefileNo);
-void animation(int NoiseNo);
+void animation();
 void weight();
 void spectrum(std::vector<double> Ndata, int noisefiledirNo);
 void compaction(std::vector<double> Ndata, int noisefiledirNo);
@@ -144,6 +144,10 @@ void dNmap(int NoiseNo) {
         double crosscor = RecalPphipi(N,phi,N0,broken);
       #endif
 
+      // int x = i/NLnoise/NLnoise, y = (i%(NLnoise*NLnoise))/NLnoise, z = i%NLnoise;
+      // int Nshift = 5;
+      // int xmax = (x<Nshift ? x-Nshift+NLnoise : x-Nshift), ymax = (y<Nshift ? y-Nshift+NLnoise : y-Nshift), zmax = (z<Nshift ? z-Nshift+NLnoise : z-Nshift);
+      // int ibias = xmax*NLnoise*NLnoise + NLnoise*ymax + zmax;
       double dw = noisedata[i][n];
       double Bias = biasdata[i][n];
       double GaussianFactor = 1./dNbias/sqrt(2*M_PI) * exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
@@ -374,33 +378,23 @@ void compaction(std::vector<double> Ndata, int noisefiledirNo) {
     Ndata[n] -= Naverage;
   }
 
+  // Find max value
+  int maxNpoint = std::distance(Ndata.begin(), std::max_element(Ndata.begin(), Ndata.end()));
+  int xmax = maxNpoint/NLnoise/NLnoise, ymax = (maxNpoint%(NLnoise*NLnoise))/NLnoise, zmax = maxNpoint%NLnoise;
+
   // radial profile
   std::vector<std::vector<double>> zetar(2, std::vector<double>(NLnoise/2,0));
   for (size_t i=0; i<NLnoise*NLnoise*NLnoise; i++) {
     int nx=i/NLnoise/NLnoise ,ny=(i%(NLnoise*NLnoise))/NLnoise, nz=i%NLnoise;
-
+    
     // centering
-    if (nx<=NLnoise/2) {
-      nx = nx;
-    }
-    else {
-      nx = nx-NLnoise;
-    }
-    if (ny<=NLnoise/2) {
-      ny = ny;
-    }
-    else {
-      ny = ny-NLnoise;
-    }
-    if (nz<=NLnoise/2) {
-      nz = nz;
-    }
-    else {
-      nz = nz-NLnoise;
-    }
+    int nxt, nyt, nzt; // shifted index
+    nxt = (nx<=NLnoise/2+xmax ? nx-xmax : nx-xmax-NLnoise);
+    nyt = (ny<=NLnoise/2+ymax ? ny-ymax : ny-ymax-NLnoise);
+    nzt = (nz<=NLnoise/2+zmax ? nz-zmax : nz-zmax-NLnoise);
 
     for (size_t ri=0; ri<NLnoise/2; ri++) {
-      double norm = std::abs(sqrt(nx*nx+ny*ny+nz*nz)-ri);
+      double norm = std::abs(sqrt(nxt*nxt+nyt*nyt+nzt*nzt)-ri);
       if (norm<=dr/2.) {
         zetar[0][ri]++;
         zetar[1][ri]+=Ndata[i];
