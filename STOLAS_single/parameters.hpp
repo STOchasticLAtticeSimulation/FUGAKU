@@ -6,14 +6,16 @@
 // Parameters of STOLAS
 const double sigma = 0.1; // ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
 const double dn = 1; // Thickness of nsigma sphere shell
-const int NLnoise = pow(2,6); // Box size L
-const int totalnoiseNo = pow(2,4); // The number of chunks
+const int NLnoise = pow(2,5); // Number of cite
+const int totalnoiseNo = pow(2,0); // The number of chunks
 const int NL = pow(NLnoise,3)/totalnoiseNo; // Box size L for each noisemap
 // const int divnumber = pow(2,5); // The number of chunks
 const double dN = 0.01; // e-folds step
 const double Nprec = 1e-7; // Precision of e-foldings
 const double dlogn = 0.1; // Width of bin in power spectrum
-const int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN); //Total number of time step with noise 
+const int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN); //Total number of time step with noise
+const double LL = 1.; // Box size L
+const double dx = LL/NLnoise; // Spacing of each lattice
 
 // Importance sampling
 const double Nbias = 3.8; // Time of the bias
