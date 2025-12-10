@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
   }
 
   if(spower) spectrum(Ndata,noisefiledirNo);
-  if(sanimation) animation();
+  if(sanimation) animation(noisefiledirNo);
   if(scompaction) compaction(Ndata,noisefiledirNo);
 
   // ---------- stop timer ----------

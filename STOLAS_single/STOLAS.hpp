@@ -54,7 +54,7 @@ bool noisebiassize();
 bool checkNfilefail();
  
 void dNmap(int noisefileNo);
-void animation();
+void animation(int NoisefiledirNo);
 void weight();
 void spectrum(std::vector<double> Ndata, int noisefiledirNo);
 void compaction(std::vector<double> Ndata, int noisefiledirNo);
@@ -124,6 +124,9 @@ void dNmap(int NoiseNo) {
     #if MODEL==1
       double N0;
       bool broken = false;
+    #elif MODEL==2
+      double N0;
+      bool broken = false;
     #endif
     state_type phi = phii;
 
@@ -132,13 +135,17 @@ void dNmap(int NoiseNo) {
 
     for (size_t n=0; n<totalstep; n++) {
       if (sanimation) {
-        Hdata[n][i + NL*NoiseNo] = pow(hubble(phi),2.);
-        pidata[n][i + NL*NoiseNo] = phi[1]*phi[1];
+        Hdata[n][i + NL*NoiseNo] = pow(hubble(phi),2.);//hubble(phi);//
+        pidata[n][i + NL*NoiseNo] = pow(phi[1],2.);//phi[0];//
       }
 
       #if MODEL==0
         double phiamp = sqrt(calPphi(phi));
       #elif MODEL==1
+        double phiamp = sqrt(calPphi(N,phi,N0,broken));
+        double piamp = sqrt(calPpi(N,phi,N0,broken));
+        double crosscor = RecalPphipi(N,phi,N0,broken);
+      #elif MODEL==2
         double phiamp = sqrt(calPphi(N,phi,N0,broken));
         double piamp = sqrt(calPpi(N,phi,N0,broken));
         double crosscor = RecalPphipi(N,phi,N0,broken);
@@ -177,7 +184,7 @@ void dNmap(int NoiseNo) {
 
     // Find zero crossing time
     typedef boost::numeric::odeint::runge_kutta_dopri5<state_type>base_stepper_type;
-    auto stepper = make_dense_output(1.0e-7, 1.0e-7, base_stepper_type());
+    auto stepper = make_dense_output(1.0e-10, 1.0e-10, base_stepper_type());
 
     stepper.initialize(phi, N, dN);
     state_type phil(2);
@@ -259,13 +266,13 @@ void weight() {
 
 
 // Export animation
-void animation() {
-  Hfile.open(Hfileprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
-  pifile.open(pifileprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(noisefileNo) + std::string(".dat"));
+void animation(int NoisefiledirNo) {
+  Hfile.open(Hfileprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(NoisefiledirNo) + std::string(".dat"));
+  pifile.open(pifileprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(NoisefiledirNo) + std::string(".dat"));
   Hfile << std::setprecision(14);
   pifile << std::setprecision(14);
 
-  for (size_t n=0; n<Hdata.size(); n++) {
+  for (size_t n=0; n<Hdata.size(); n+=10) {
     for (size_t i=0; i<Hdata[n].size(); i++) {
       Hfile << Hdata[n][i] << ' ';
       pifile << pidata[n][i] << ' ';

@@ -5,7 +5,7 @@ FUNC = functions
 
 CXX := g++
 
-CXXFLAGS := -std=c++14 -O2 -Xpreprocessor -fopenmp
+CXXFLAGS := -std=c++14 -O3 -Xpreprocessor -fopenmp -march=native -ffast-math -flto -funroll-loops
 CPPFLAGS := -I/opt/homebrew/opt/libomp/include -I/opt/homebrew/opt/boost/include
 
 LDFLAGS := -L/opt/homebrew/opt/libomp/lib

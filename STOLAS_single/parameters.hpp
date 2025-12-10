@@ -1,13 +1,13 @@
 #ifndef INCLUDED_parameters_hpp_
 #define INCLUDED_parameters_hpp_
 
-#define MODEL 1 // 0 -> chaotic, 1 -> Starobinsky
+#define MODEL 2 // 0 -> chaotic, 1 -> Starobinsky, 2 -> USR
 
 // Parameters of STOLAS
 const double sigma = 0.1; // ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
 const double dn = 1; // Thickness of nsigma sphere shell
-const int NLnoise = pow(2,5); // Number of cite
-const int totalnoiseNo = pow(2,0); // The number of chunks
+const int NLnoise = pow(2,6); // Number of cite
+const int totalnoiseNo = pow(2,3); // The number of chunks
 const int NL = pow(NLnoise,3)/totalnoiseNo; // Box size L for each noisemap
 // const int divnumber = pow(2,5); // The number of chunks
 const double dN = 0.01; // e-folds step
@@ -20,14 +20,14 @@ const double dx = LL/NLnoise; // Spacing of each lattice
 // Importance sampling
 const double Nbias = 3.8; // Time of the bias
 const double dNbias = 0.1; // Variance of the bias
-const double bias = 20*sqrt(dNbias); // Amplitude of the bias
+const double bias = 0*sqrt(dNbias); // Amplitude of the bias
 
 // Outputs
 const bool szeta = true; // Output the zeta
 const bool spower = true; // Output the power spectrum
-const bool sweight = true; // Output the weight
+const bool sweight = false; // Output the weight
 const bool scompaction = true; // Output the compaction
-const bool sanimation = false; // Output the animation
+const bool sanimation = true; // Output the animation
 
 // Directory name of saved data, you can change after "make clean" in your terminal.
 const std::string sdatadir = "data";
