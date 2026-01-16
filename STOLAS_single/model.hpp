@@ -133,11 +133,11 @@ const double calPRIR = 8.5e-10; // Amplitude of curvature perturbation
 const double Lambda = 1700; // Ratio between Ap to Am
 const double Ap = sqrt(9./4/M_PI/M_PI*H0*H0*H0*H0*H0*H0/calPRIR); // Gradient of the potential at first stage
 const double Am0 = 0*Ap/Lambda/Lambda; // Gradient of the potential at second stage
-const double Am = Ap/Lambda; // Gradient of the potential at third stage
+const double Am = Ap;///Lambda; // Gradient of the potential at third stage
 const double V0 = 3*H0*H0; // Amplitude of flat potential
-const double phif = -0.0187; // The inflaton value at the end of inflation
-const std::vector<double> phii{0.01930,-5.45e-7};//{0.0193,-5.45e-7}; // Initial conditions {field,derivative}
-const double USRrange = -0.0180356;//-0.0180356;
+const double phif = -0.3; // The inflaton value at the end of inflation
+const std::vector<double> phii{0.0193,-5.45e-7};//{0.0193,-5.45e-7}; // Initial conditions {field,derivative}
+const double USRrange = -0.0181435;//-0.0180356;
 
 // Potential
 double VV(double phi) {
@@ -156,7 +156,7 @@ double Vp(double phi) {
     return Ap;
   } else if (phi > USRrange && phi <= 0) {
     return Am0;
-  }else {
+  } else {
     return Am;
   }
 }

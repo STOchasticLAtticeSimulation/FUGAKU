@@ -1,0 +1,11 @@
+*
+!*.*
+!*/
+*.dat
+*.o
+*.img
+*.txt
+*.DS_Store
+*.vscode
+*.bin
+*.gif

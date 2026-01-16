@@ -26,6 +26,13 @@
 #endif
 
 
+#include <random>
+// random distribution
+std::random_device seed;
+std::mt19937 engine(seed());
+std::normal_distribution<> dist(0., 1.);
+
+
 // useful macro
 #define LOOP for(int i = 0; i < NL; i++) for(int j = 0; j < NL; j++) for(int k = 0; k < NL; k++)
 #define LOOPLONG for(int i = 0; i < NLnoise; i++) for(int j = 0; j < NLnoise; j++) for(int k = 0; k < NLnoise; k++)
@@ -155,15 +162,22 @@ void dNmap(int NoiseNo) {
       // int Nshift = 5;
       // int xmax = (x<Nshift ? x-Nshift+NLnoise : x-Nshift), ymax = (y<Nshift ? y-Nshift+NLnoise : y-Nshift), zmax = (z<Nshift ? z-Nshift+NLnoise : z-Nshift);
       // int ibias = xmax*NLnoise*NLnoise + NLnoise*ymax + zmax;
-      double dw = noisedata[i][n];
+
+      double dw = dist(engine);//noisedata[i][n];//
       double Bias = biasdata[i][n];
       double GaussianFactor = 1./dNbias/sqrt(2*M_PI) * exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
 
-      stepper_noise.do_step(dphidN, phi, N, dN);
-      N += dN;
+      // stepper_noise.do_step(dphidN, phi, N, dN);
+      // N += dN;
+      double divdN = 2000.;
+      for (int dn=0; dn<(int)divdN;dn++) {
+        // double dw = dist(engine);
+        stepper_noise.do_step(dphidN, phi, N, dN/divdN);
+        N += dN/divdN;
+      }
       
       phi[0] += phiamp * dw * sqrt(dN);
-      phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
+      // phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
 
       #if MODEL==1
         if (crosscor > 0) {

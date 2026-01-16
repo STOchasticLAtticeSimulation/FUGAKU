@@ -26,8 +26,8 @@ const double bias = 0*sqrt(dNbias); // Amplitude of the bias
 const bool szeta = true; // Output the zeta
 const bool spower = true; // Output the power spectrum
 const bool sweight = false; // Output the weight
-const bool scompaction = true; // Output the compaction
-const bool sanimation = true; // Output the animation
+const bool scompaction = false; // Output the compaction
+const bool sanimation = false; // Output the animation
 
 // Directory name of saved data, you can change after "make clean" in your terminal.
 const std::string sdatadir = "data";

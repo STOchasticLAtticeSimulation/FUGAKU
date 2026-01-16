@@ -12,7 +12,7 @@
 #source /opt/intel/bin/compilervars.sh intel64
 #export OMP_NUM_THREADS=$NSLOTS
 
-for ((i=1; i<2; i++))
+for ((i=0; i<1; i++))
 do
     echo "Processing index $i"
     mkdir -p noisedata/noiselist_$i
