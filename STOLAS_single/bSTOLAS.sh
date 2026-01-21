@@ -41,8 +41,6 @@ mkdir -p "$data"
 mkdir -p "$data/$model"
 mkdir -p "$data/$model/animation"
 
-echo "/$model"
-
 for ((i=0; i<1; i++))
 do
     echo "Number $i"

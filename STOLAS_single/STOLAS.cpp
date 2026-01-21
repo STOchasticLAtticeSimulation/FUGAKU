@@ -24,6 +24,8 @@ int main(int argc, char* argv[])
 
   int noisefiledirNo = atoi(argv[1]);
 
+  std::cout << "model : " << model << std::endl;
+
   Nfile.open(Nfileprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(noisefiledirNo) + std::string(".dat"));
   logwfile.open(logwfileprefix + std::to_string(NLnoise) + std::string(".dat"), std::ios::app);
   Nfilefail = Nfile.fail();
@@ -32,12 +34,11 @@ int main(int argc, char* argv[])
   Ndata = std::vector<double>(NLnoise*NLnoise*NLnoise,0);
 
   if (sanimation) {
-      Hdata = std::vector<std::vector<double>>(totalstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
-      pidata = std::vector<std::vector<double>>(totalstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
-    }
+    Hdata = std::vector<std::vector<double>>(totalstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
+    pidata = std::vector<std::vector<double>>(totalstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
+  }
   
-  for (int noiseNo = 0; noiseNo < totalnoiseNo; noiseNo++)
-  {
+  for (int noiseNo = 0; noiseNo < totalnoiseNo; noiseNo++) {
     STOLAS(noisefiledirNo,noiseNo);
 
     if (!checknoisefile()) {

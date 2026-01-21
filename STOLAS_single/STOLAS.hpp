@@ -77,7 +77,7 @@ void STOLAS(int NoisefileDirNo, int NoisefileNo);
 void STOLAS(int NoisefileDirNo, int NoisefileNo) {
   std::ifstream noisefile, biasfile;
 
-  std::cout << "Noise file No. : " << NoisefileNo << std::endl;
+  std::cout << "Noise file No. " << NoisefileNo << std::endl;
   
   noisefile.open(noisefiledir + std::to_string(NoisefileDirNo) + noisefilenamediv + std::to_string(NoisefileNo) + std::string(".bin"), std::ios::binary);
   noisefilefail = noisefile.fail();
@@ -85,7 +85,6 @@ void STOLAS(int NoisefileDirNo, int NoisefileNo) {
   biasfilefail = biasfile.fail();
   
   if (!noisefile.fail() && !biasfile.fail()) {
-    std::cout << "model : " << model << std::endl;
 
     while (true) {
       std::vector<double> vv(NL);
@@ -112,7 +111,7 @@ void STOLAS(int NoisefileDirNo, int NoisefileNo) {
     biasdataTr.clear();
 
 
-    std::cout << "Noise/Bias data imported. Box size is " << NL << "." << std::endl;
+    std::cout << "Noise/Bias data imported. Data size is " << NL << "." << std::endl;
   }
 }
 
@@ -138,7 +137,8 @@ void dNmap(int NoiseNo) {
     state_type phi = phii;
 
     // stepper
-    boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
+    // boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
+    boost::numeric::odeint::runge_kutta_dopri5<state_type> stepper_noise;
 
     for (size_t n=0; n<totalstep; n++) {
       if (sanimation) {
@@ -169,15 +169,14 @@ void dNmap(int NoiseNo) {
 
       // stepper_noise.do_step(dphidN, phi, N, dN);
       // N += dN;
-      double divdN = 2000.;
-      for (int dn=0; dn<(int)divdN;dn++) {
-        // double dw = dist(engine);
+      double divdN = 200.;
+      for (int dn=0;dn<(int)divdN;dn++) {
         stepper_noise.do_step(dphidN, phi, N, dN/divdN);
         N += dN/divdN;
       }
       
       phi[0] += phiamp * dw * sqrt(dN);
-      // phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
+      phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
 
       #if MODEL==1
         if (crosscor > 0) {
