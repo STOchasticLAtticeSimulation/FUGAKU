@@ -160,10 +160,7 @@ void evolution(int NoiseNo) {
     double N = 0;
     int numstep = 0;
     int animationcount = 0; // for animation
-    #if MODEL==1
-      double N0;
-      bool broken = false;
-    #elif MODEL==2
+    #if MODEL==1 || MODEL==2
       double N0;
       bool broken = false;
     #endif

@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 
     // Interpolation
     if (interpolatingnumber!=internumber) {
-      std::vector<int> shift{NLnoise/2,NLnoise/2,NLnoise/2}; // std::vector<int> shift = findNMaxBox(Ndata);
+      std::vector<int> shift{0,0,0}; // std::vector<int> shift = findNMaxBox(Ndata);
 
       phievol = Phidata; // reset field values
       Ntotal.fill(0.0); // reset vector
