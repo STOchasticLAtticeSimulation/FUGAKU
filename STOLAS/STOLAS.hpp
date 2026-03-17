@@ -10,6 +10,8 @@
 #include <vector>
 #include <functional>
 #include <complex>
+const std::complex<double> II(0, 1);
+
 #include <sys/time.h>
 
 #include <boost/numeric/odeint.hpp>
@@ -64,8 +66,16 @@ std::vector<std::vector<std::vector<double>>> phianimation;
 std::array<double,NLnoiseAll> Nnoise{};
 std::array<double,NLnoiseAll> Naverage{};
 std::array<double,NLnoiseAll> Ntotal{};
+
+#if MODEL==1
 std::array<double,NLnoiseAll> N0list{};
 std::array<double,NLnoiseAll> brokenlist{};
+#elif MODEL==2
+std::array<double,NLnoiseAll> N1list{};
+std::array<double,NLnoiseAll> N2list{};
+std::array<double,NLnoiseAll> broken1list{};
+std::array<double,NLnoiseAll> broken2list{};
+#endif
 
 #include "src/output.hpp"
 #include "src/zoom.hpp"
@@ -87,7 +97,6 @@ void initialize(){
   LOOPLONG{
     phievol[NLnoise*NLnoise*i + NLnoise*j + k] = phii;
   }
-  N0list.fill(100.0);
 }
 
 
@@ -160,13 +169,18 @@ void evolution(int NoiseNo) {
 #pragma omp parallel for
 #endif
   for (int i=0; i<NL; i++) {
-    double N = 0;
-    if(superH) N = firststep*dN;
+    double N = (superH ? firststep*dN : 0);
+    // if(superH) N = firststep*dN;
     int numstep = 0;
     int animationcount = 0; // for animation
-    #if MODEL==1 || MODEL==2
+    #if MODEL==1
       double N0 = N0list[i + NL*NoiseNo];
       bool broken = (brokenlist[i + NL*NoiseNo]==0 ? false : true);
+    #elif MODEL==2
+      double N1 = N1list[i + NL*NoiseNo];
+      double N2 = N2list[i + NL*NoiseNo];
+      bool broken1 = (broken1list[i + NL*NoiseNo]==0 ? false : true);
+      bool broken2 = (broken1list[i + NL*NoiseNo]==0 ? false : true);
     #endif
     
     state_type phi = phievol[i + NL*NoiseNo];
@@ -175,10 +189,14 @@ void evolution(int NoiseNo) {
     boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
 
     for (size_t n=0; n<noisedata[0][0].size(); n++) {
-      #if MODEL==1 || MODEL==2
+      #if MODEL==1
         double phiamp = sqrt(calPphi(N,phi,N0,broken));
         double piamp = sqrt(calPpi(N,phi,N0,broken));
         double crosscor = RecalPphipi(N,phi,N0,broken);
+      #elif MODEL==2
+        double phiamp = sqrt(calPphi(N,phi,N1,N2,broken1,broken2));
+        double piamp = sqrt(calPpi(N,phi,N1,N2,broken1,broken2));
+        double crosscor = RecalPphipi(N,phi,N1,N2,broken1,broken2);
       #else
         double phiamp = sqrt(calPphi(phi));
       #endif
@@ -186,7 +204,7 @@ void evolution(int NoiseNo) {
       double dw = 0.;
       #if MODEL==3
         NFLOOP{
-          dw = noisedata[nf-1][i][n];// dist(engine);// 
+          dw = noisedata[nf-1][i][n];
           phi[2*nf] += phiamp * dw * sqrt_dN;
         }
       #else
@@ -223,6 +241,19 @@ void evolution(int NoiseNo) {
           brokenlist[i + NL*NoiseNo] = 1;
           N0list[i + NL*NoiseNo] = N;
         }
+      #elif MODEL==2
+        if (broken2list[i + NL*NoiseNo]==0 && phi[0] < phi1) {
+          N1 = N;
+          broken1 = true;
+          broken1list[i + NL*NoiseNo] = 1;
+          N1list[i + NL*NoiseNo] = N;
+        }
+        if (broken2list[i + NL*NoiseNo]==0 && phi[0] < phi2) {
+          N2 = N;
+          broken2 = true;
+          broken2list[i + NL*NoiseNo] = 1;
+          N2list[i + NL*NoiseNo] = N;
+        }
       #endif
 
       if(strajectory && i==0 && NoiseNo==0){
@@ -256,38 +287,58 @@ void evolutionNoise(int NoiseNo) {
     double N = 0;
     state_type phi = phievol[i + NL*NoiseNo];
 
+    #if MODEL==1
+      double N0 = N0list[i + NL*NoiseNo];
+      bool broken = (brokenlist[i + NL*NoiseNo]==0 ? false : true);
+    #elif MODEL==2
+      double N1 = N1list[i + NL*NoiseNo];
+      double N2 = N2list[i + NL*NoiseNo];
+      bool broken1 = (broken1list[i + NL*NoiseNo]==0 ? false : true);
+      bool broken2 = (broken1list[i + NL*NoiseNo]==0 ? false : true);
+    #endif
+
     // stepper
-    // boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
+    boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
     
-    // while (EoN(phi)>0) {
-    //   #if MODEL==3
-    //     double psiamp = sqrt(calPpsi(phi));
-    //     stepper_noise.do_step(dphidN, phi, N, dN);
-    //     N += dN;
-    //     NFLOOP{
-    //       double dw = dist(engine);
-    //       phi[2*nf] += psiamp * dw * sqrt_dN;
-    //     }
-
-    //     if(strajectory && i==0 && NoiseNo==0 && sanisuperH) {
-    //       save_trajectory(phi, N+dN*totalstep);
-    //     }
-    //   #else
-    //     double phiamp = sqrt(calPphi(phi));
-    //     stepper_noise.do_step(dphidN, phi, N, dN);
-    //     N += dN;
+    while (EoN(phi)>0) {
+      #if MODEL==3
+        double psiamp = sqrt(calPpsi(phi));
+        stepper_noise.do_step(dphidN, phi, N, dN);
+        N += dN;
+        NFLOOP{
+          double dw = dist(engine);
+          phi[2*nf] += psiamp * dw * sqrt_dN;
+        }
+      #elif MODEL==2
+        double phiamp = sqrt(calPphi(N,phi,N1,N2,broken1,broken2));
+        double piamp = sqrt(calPpi(N,phi,N1,N2,broken1,broken2));
+        double crosscor = RecalPphipi(N,phi,N1,N2,broken1,broken2);
         
-    //     double dw = dist(engine);
-    //     phi[0] += phiamp * dw * sqrt_dN;
+        stepper_noise.do_step(dphidN, phi, N, dN);
+        N += dN;
+        
+        double dw = dist(engine);
+        phi[0] += phiamp * dw * sqrt_dN;
+      #elif MODEL==1
+        double phiamp = sqrt(calPphi(N,phi,N0,broken));
+        double piamp = sqrt(calPpi(N,phi,N0,broken));
+        double crosscor = RecalPphipi(N,phi,N0,broken);
+      #else
+        double phiamp = sqrt(calPphi(phi));
+        
+        stepper_noise.do_step(dphidN, phi, N, dN);
+        N += dN;
+        
+        double dw = dist(engine);
+        phi[0] += phiamp * dw * sqrt_dN;
+      #endif
+      if(strajectory && i==0 && NoiseNo==0 && superH) {
+        save_trajectory(phi, N+dN*totalstep);
+      }
+    }
 
-    //     if(strajectory && i==0 && NoiseNo==0 && sanisuperH) {
-    //       save_trajectory(phi, N+dN*totalstep);
-    //     }
-    //   #endif
-    // }
-
-    // phievol[i + NL*NoiseNo] = phi;
-    // Nnoise[i + NL*NoiseNo] = N;
+    phievol[i + NL*NoiseNo] = phi;
+    Nnoise[i + NL*NoiseNo] = N;
   }
 }
 

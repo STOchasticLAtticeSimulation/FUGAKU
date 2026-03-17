@@ -2,11 +2,11 @@
 #define INCLUDED_parameters_hpp_
 
 // Parameters of STOLAS
-const double sigma = pow(2.,-3.); // ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
+const double sigma = 0.1;//pow(2.,-3.); // ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
 const double dn = 1; // Thickness of nsigma sphere shell
 constexpr int NLnoise = 64; // Box size L
 const int totalnoiseNo = pow(2,3); // The number of chunks
-const double dN = 0.01/log2(exp(1)); // e-folds step
+const double dN = 0.01;///log2(exp(1)); // e-folds step
 const double Nprec = 1e-7; // Precision of e-foldings
 const double dlogn = 0.1; // Width of bin in power spectrum
 const double LL = 1.; // Box size L

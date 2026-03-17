@@ -153,14 +153,14 @@ const double H0 = 1e-5; // Hubble parameter of broken point
 const double calPRIR = 8.5e-10; // Amplitude of curvature perturbation
 const double Lambda = 1700; // Ratio between Ap to Am
 const double B1 = sqrt(9./4/M_PI/M_PI*H0*H0*H0*H0*H0*H0/calPRIR); // Gradient of the potential at first stage
-const double B2 = 0*B1/Lambda/Lambda; // Gradient of the potential at second stage
-const double B3 = B1;///Lambda; // Gradient of the potential at third stage
-const double V0 = 3*H0*H0; // Amplitude of flat potential
+const double B2 = 0; // Gradient of the potential at second stage
+const double B3 = B1; // Gradient of the potential at third stage
+const double V0 = 3.*H0*H0; // Amplitude of flat potential
 const double phif = -0.3; // The inflaton value at the end of inflation
-const double PHI_INIT = 0.1193;
+const double PHI_INIT = 0.11;
 const double DPHI_INIT = -5.45e-7;
 const double USRrange = -0.0181435;//-0.0180356;
-double divdN = 10.; //200; //
+double divdN = 10.;
 
 const double phi1 = 0.;
 const double phi2 = phi1 + USRrange;
@@ -193,17 +193,49 @@ double hubble(const state_type &phi) {
 }
 
 // Power spectrum of phi
-double calPphi(double &N, const state_type &phi, double N0, bool broken) {
-  return pow(hubble(phi)/2./M_PI,2);
+// double calPphi(double &N, const state_type &phi, double N0, bool broken) {
+//   return pow(hubble(phi)/2./M_PI,2);
+// }
+double calPphi(double &N, const state_type &phi, double N1, double N2, bool broken1, bool broken2) {
+  if (!broken1&&!broken2) {
+    return (pow(M_PI,-2)*(1 + pow(sigma,2))*pow(hubble(phi),2))/4.;
+  }
+  else if(broken1&&!broken2) {
+    return (pow(M_PI,-2)*pow(B1,-2)*exp(-6*N + 6*N1)*pow(sigma,-6)*pow(hubble(phi),2)*
+     (3*(B1 - B2)*cos(sigma*(2 - 2*exp(N - N1)))*exp(-5*N1)*(-3*B2*exp(N1)*
+           (exp(4*N1)*(-1 + pow(sigma,2)) - 4*exp(N + 3*N1)*pow(sigma,2) - 4*exp(3*N + N1)*pow(sigma,4) + exp(4*N)*(pow(sigma,4) - pow(sigma,6))) + 
+          B1*(3*exp(5*N1)*(-1 + pow(sigma,2)) - 12*exp(N + 4*N1)*pow(sigma,2) - 16*exp(3*N + 2*N1)*pow(sigma,4) - 
+             7*exp(4*N + N1)*(-1 + pow(sigma,2))*pow(sigma,4) + 4*exp(5*N)*pow(sigma,6))) + 
+       (1 + pow(sigma,2))*(pow(B1,2)*(9 + 18*exp(2*N - 2*N1)*pow(sigma,2) + 9*exp(4*N - 4*N1)*pow(sigma,4) + 2*exp(6*N - 6*N1)*pow(sigma,6)) - 
+          18*B1*B2*pow(1 + exp(2*N - 2*N1)*pow(sigma,2),2) + 9*pow(B2 + B2*exp(2*N - 2*N1)*pow(sigma,2),2)) + 
+       6*(B1 - B2)*sigma*exp(-5*N1)*(3*B2*exp(N1)*(-exp(N) + exp(N1))*
+           (exp(3*N1) + exp(2*N + N1)*pow(sigma,2) + exp(N + 2*N1)*pow(sigma,2) + exp(3*N)*pow(sigma,4)) + 
+          B1*(-3*exp(5*N1) - 3*exp(N + 4*N1)*(-1 + pow(sigma,2)) - 4*exp(3*N + 2*N1)*(-1 + pow(sigma,2))*pow(sigma,2) + 7*exp(4*N + N1)*pow(sigma,4) + 
+             exp(5*N)*(-1 + pow(sigma,2))*pow(sigma,4)))*sin(sigma*(2 - 2*exp(N - N1)))))/8.;
+  }
+  else {
+    return (pow(M_PI,-2)*pow(B1,-2)*exp(6*(-2*N + N2))*pow(sigma,3)*pow(std::abs(pow(sigma,-7.5)*
+        ((1. - II*sigma)*exp(2.*II*sigma)*(-II*exp(3*N1)*
+              (3.*II*(-B1 + B2) + 3.*II*(-B1 + B2)*exp(2*N - 2*N1)*pow(sigma,2) + 2*B1*exp(3*N - 3*N1)*pow(sigma,3))*
+              (3*(B2 - B3)*exp(-3*N1) + 3*(B2 - B3)*exp(2*N - 3*N1 - 2*N2)*pow(sigma,2) + 2.*II*(B1 - B2)*exp(3*N - 6*N2)*pow(sigma,3) + 
+                2.*II*B2*exp(-3*(-N + N1 + N2))*pow(sigma,3)) + 
+             9*(B1 - B2)*(B2 - B3)*exp(2.*II*sigma*exp(N)*(exp(-N1) - exp(-N2)))*pow(II + sigma*exp(N - N1),2)*
+              pow(-II + sigma*exp(N - N2),2)) - 3.*II*(1. + II*sigma)*exp(2.*II*sigma*exp(N - N2))*
+           (II*(B1 - B2)*exp(3*N1 + 2.*II*sigma*exp(N)*(exp(-N1) - exp(-N2)))*
+              (3*(B2 - B3)*exp(-3*N1) + 3*(B2 - B3)*exp(2*N - 3*N1 - 2*N2)*pow(sigma,2) - 2.*II*(B1 - B2)*exp(3*N - 6*N2)*pow(sigma,3) - 
+                2.*II*B2*exp(-3*(-N + N1 + N2))*pow(sigma,3))*pow(II + sigma*exp(N - N1),2) + 
+             (B2 - B3)*(3.*II*(-B1 + B2) + 3.*II*(-B1 + B2)*exp(2*N - 2*N1)*pow(sigma,2) + 2*B1*exp(3*N - 3*N1)*pow(sigma,3))*
+              pow(II + sigma*exp(N - N2),2)))*pow(B2*exp(-3*N1) + (B1 - B2)*exp(-3*N2),-1)),2)*pow(hubble(phi),2))/64.;
+  }
 }
 
 // The power spectrum of pi
-double calPpi(double &N, const state_type &phi, double N0, bool broken) {
+double calPpi(double &N, const state_type &phi, double N1, double N2, bool broken1, bool broken2) {
   return 0;
 }
 
 // Cross correlation of phi and pi
-double RecalPphipi(double &N, const state_type &phi, double N0, bool broken) {
+double RecalPphipi(double &N, const state_type &phi, double N1, double N2, bool broken1, bool broken2) {
   return 1;
 }
 
