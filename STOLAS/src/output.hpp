@@ -50,10 +50,13 @@ void save_field(int NoiseNo){
 }
 
 void save_trajectory(state_type PHI, double Ntime){
-  trajectoryfile << Ntime << ' ' << PHI[0] << ' ';
-  double PSISUM = 0;
-  NFLOOP PSISUM += pw2(PHI[2*nf]);
-  trajectoryfile << PSISUM << ' ' << EoI(PHI)-2 << ' ' << hubble(PHI) << std::endl;
+  trajectoryfile << Ntime << ' ' << PHI[0];
+  #if MODEL==3
+    double PSISUM = 0;
+    NFLOOP PSISUM += pw2(PHI[2*nf]);
+    trajectoryfile << ' ' << PSISUM << ' ' << EoI(PHI)-2 << ' ' << hubble(PHI);
+  #endif
+  trajectoryfile << std::endl;
 }
 
 void animation(int NoisefiledirNo, int EachField){

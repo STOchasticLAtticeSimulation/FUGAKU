@@ -20,7 +20,7 @@ int internumber = 0; // Number of zoom-in
 
 // Outputs
 const bool sfield = false; // Output field
-const bool strajectory = false; // Output the trajectory // hybrid
+const bool strajectory = false; // Output the trajectory
 const bool spower = true; // Output the power spectrum
 bool sanimation = false; // Output the animation //hybrid
 const bool sweight = false; // Output the weight
