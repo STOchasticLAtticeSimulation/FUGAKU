@@ -44,7 +44,7 @@ const std::string powsfileprefix = sdatadir + "/" + model + "/powers";
 const std::string cmpfileprefix = sdatadir + "/" + model + "/compaction_";
 const std::string prbfileprefix = sdatadir + "/" + model + "/probabilities";
 const std::string logwfileprefix = sdatadir + "/" + model + "/logw_";
-bool noisefilefail, biasfilefail, Nfilefail, sanisuperH = false;
+bool noisefilefail, biasfilefail, Nfilefail, superH = false;
 
 int Nn, noisefiledirNo, noisefileNo;
 std::ofstream Nfile, fieldfile, fieldfileA, trajectoryfile, powfile, powsfile, cmpfile, prbfile, logwfile;
@@ -64,6 +64,8 @@ std::vector<std::vector<std::vector<double>>> phianimation;
 std::array<double,NLnoiseAll> Nnoise{};
 std::array<double,NLnoiseAll> Naverage{};
 std::array<double,NLnoiseAll> Ntotal{};
+std::array<double,NLnoiseAll> N0list{};
+std::array<double,NLnoiseAll> brokenlist{};
 
 #include "src/output.hpp"
 #include "src/zoom.hpp"
@@ -85,6 +87,7 @@ void initialize(){
   LOOPLONG{
     phievol[NLnoise*NLnoise*i + NLnoise*j + k] = phii;
   }
+  N0list.fill(100.0);
 }
 
 
@@ -158,11 +161,12 @@ void evolution(int NoiseNo) {
 #endif
   for (int i=0; i<NL; i++) {
     double N = 0;
+    if(superH) N = firststep*dN;
     int numstep = 0;
     int animationcount = 0; // for animation
     #if MODEL==1 || MODEL==2
-      double N0;
-      bool broken = false;
+      double N0 = N0list[i + NL*NoiseNo];
+      bool broken = (brokenlist[i + NL*NoiseNo]==0 ? false : true);
     #endif
     
     state_type phi = phievol[i + NL*NoiseNo];
@@ -178,16 +182,6 @@ void evolution(int NoiseNo) {
       #else
         double phiamp = sqrt(calPphi(phi));
       #endif
-
-      #if MODEL==2
-        for (int dn=0;dn<(int)divdN;dn++) {
-          stepper_noise.do_step(dphidN, phi, N, dN/divdN);
-          N += dN/divdN;
-        }
-      #else
-        stepper_noise.do_step(dphidN, phi, N, dN);
-        N += dN;
-      #endif
   
       double dw = 0.;
       #if MODEL==3
@@ -199,21 +193,48 @@ void evolution(int NoiseNo) {
         dw = noisedata[0][i][n];
         double Bias = biasdata[0][i][n];
         double GaussianFactor = 1./dNbias/sqrt(2*M_PI) * exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
+
+        #if MODEL==2
+          for (int dn=0;dn<(int)divdN;dn++) {
+            stepper_noise.do_step(dphidN, phi, N, dN/divdN);
+            N += dN/divdN;
+          }
+        #else
+          stepper_noise.do_step(dphidN, phi, N, dN);
+          N += dN;
+        #endif
         
         phi[0] += phiamp * dw * sqrt_dN;
         phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
       #endif
 
+      #if MODEL==1
+        if (crosscor > 0) {
+          phi[1] += piamp * dw * sqrt_dN;
+          phi[1] += piamp * bias * Bias * GaussianFactor * dN;
+        } else {
+          phi[1] -= piamp * dw * sqrt_dN;
+          phi[1] -= piamp * bias * Bias * GaussianFactor * dN;
+        }
+
+        if (brokenlist[i + NL*NoiseNo]==0 && phi[0] < 0) {
+          N0 = N;
+          broken = true;
+          brokenlist[i + NL*NoiseNo] = 1;
+          N0list[i + NL*NoiseNo] = N;
+        }
+      #endif
+
       if(strajectory && i==0 && NoiseNo==0){
         double Nd = N;
-        if(sanisuperH) Nd += dN*firststep;
+        if(superH) Nd += dN*firststep;
         save_trajectory(phi, Nd);
       }
 
       animationcount++;
       if(sanimation && animationcount>aninum-1){
         int ef = int(n/aninum);
-        if(sanisuperH) ef += int(firststep/aninum);
+        if(superH) ef += int(firststep/aninum);
         NFLOOP{
           phianimation[ef][i + NL*NoiseNo][2*nf] = phi[2*nf];
         }
@@ -319,7 +340,7 @@ void dNmap(int NoiseNo, int InterpolatingNo) {
         break;
       }
 
-      if(strajectory && i==0 && NoiseNo==0 && sanisuperH) {
+      if(strajectory && i==0 && NoiseNo==0 && superH) {
         save_trajectory(phi, N);
       }
     }

@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
     Phidata = phievol;
 
     // Solve untill superH
-    sanisuperH = true;
+    superH = true;
     if (sallslice||interpolatingnumber==internumber) {
       for (int noiseNo = 0; noiseNo < totalnoiseNo; noiseNo++) {
         STOLAS(noisefiledirNo,noiseNo,999);
