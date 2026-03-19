@@ -9,14 +9,17 @@
 #include <iomanip>
 #include <vector>
 #include <functional>
-#include <complex>
-const std::complex<double> II(0, 1);
-
+#include <random>
 #include <sys/time.h>
-
+#include <complex>
 #include <boost/numeric/odeint.hpp>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #define euler_gamma 0.57721566490153286061
+const std::complex<double> II(0, 1);
 
 #include "parameters.hpp"
 #include "model.hpp"
@@ -24,18 +27,6 @@ const std::complex<double> II(0, 1);
 #include "src/array_op.hpp"
 #include "src/fft.hpp"
 #include "src/util.hpp"
-
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
-
-#include <random>
-std::mt19937 engine(1); // Fixed seed
-// std::random_device seed; // random seed
-// std::mt19937 engine(seed());
-std::normal_distribution<> dist(0., 1.);
-
 
 const std::string Nfileprefix = sdatadir + "/" + model + "/Nmap_";
 const std::string fieldfileprefix = sdatadir + "/" + model + "/field_";
@@ -170,20 +161,21 @@ void evolution(int NoiseNo) {
 #endif
   for (int i=0; i<NL; i++) {
     double N = (superH ? firststep*dN : 0);
-    // if(superH) N = firststep*dN;
+    int LatticePoint = i + NL*NoiseNo;
     int numstep = 0;
     int animationcount = 0; // for animation
+
     #if MODEL==1
-      double N0 = N0list[i + NL*NoiseNo];
-      bool broken = (brokenlist[i + NL*NoiseNo]==0 ? false : true);
+      double N0 = N0list[LatticePoint];
+      bool broken = (brokenlist[LatticePoint]==0 ? false : true);
     #elif MODEL==2
-      double N1 = N1list[i + NL*NoiseNo];
-      double N2 = N2list[i + NL*NoiseNo];
-      bool broken1 = (broken1list[i + NL*NoiseNo]==0 ? false : true);
-      bool broken2 = (broken1list[i + NL*NoiseNo]==0 ? false : true);
+      double N1 = N1list[LatticePoint];
+      double N2 = N2list[LatticePoint];
+      bool broken1 = (broken1list[LatticePoint]==0 ? false : true);
+      bool broken2 = (broken1list[LatticePoint]==0 ? false : true);
     #endif
     
-    state_type phi = phievol[i + NL*NoiseNo];
+    state_type phi = phievol[LatticePoint];
 
     // stepper
     boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
@@ -235,24 +227,24 @@ void evolution(int NoiseNo) {
           phi[1] -= piamp * bias * Bias * GaussianFactor * dN;
         }
 
-        if (brokenlist[i + NL*NoiseNo]==0 && phi[0] < 0) {
+        if (brokenlist[LatticePoint]==0 && phi[0] < 0) {
           N0 = N;
           broken = true;
-          brokenlist[i + NL*NoiseNo] = 1;
-          N0list[i + NL*NoiseNo] = N;
+          brokenlist[LatticePoint] = 1;
+          N0list[LatticePoint] = N;
         }
       #elif MODEL==2
-        if (broken2list[i + NL*NoiseNo]==0 && phi[0] < phi1) {
+        if (broken2list[LatticePoint]==0 && phi[0] < phi1) {
           N1 = N;
           broken1 = true;
-          broken1list[i + NL*NoiseNo] = 1;
-          N1list[i + NL*NoiseNo] = N;
+          broken1list[LatticePoint] = 1;
+          N1list[LatticePoint] = N;
         }
-        if (broken2list[i + NL*NoiseNo]==0 && phi[0] < phi2) {
+        if (broken2list[LatticePoint]==0 && phi[0] < phi2) {
           N2 = N;
           broken2 = true;
-          broken2list[i + NL*NoiseNo] = 1;
-          N2list[i + NL*NoiseNo] = N;
+          broken2list[LatticePoint] = 1;
+          N2list[LatticePoint] = N;
         }
       #endif
 
@@ -267,13 +259,13 @@ void evolution(int NoiseNo) {
         int ef = int(n/aninum);
         if(superH) ef += int(firststep/aninum);
         NFLOOP{
-          phianimation[ef][i + NL*NoiseNo][2*nf] = phi[2*nf];
+          phianimation[ef][LatticePoint][2*nf] = phi[2*nf];
         }
         animationcount=0;
       }
     }
 
-    phievol[i + NL*NoiseNo] = phi;
+    phievol[LatticePoint] = phi;
   }
 }
 
@@ -285,16 +277,21 @@ void evolutionNoise(int NoiseNo) {
 #endif
   for (int i=0; i<NL; i++) {
     double N = 0;
-    state_type phi = phievol[i + NL*NoiseNo];
+    int LatticePoint = i + NL*NoiseNo;
+    
+    std::mt19937 engine(1 + LatticePoint); // generate random noise for each thread
+    std::normal_distribution<> dist(0., 1.);
+
+    state_type phi = phievol[LatticePoint];
 
     #if MODEL==1
-      double N0 = N0list[i + NL*NoiseNo];
-      bool broken = (brokenlist[i + NL*NoiseNo]==0 ? false : true);
+      double N0 = N0list[LatticePoint];
+      bool broken = (brokenlist[LatticePoint]==0 ? false : true);
     #elif MODEL==2
-      double N1 = N1list[i + NL*NoiseNo];
-      double N2 = N2list[i + NL*NoiseNo];
-      bool broken1 = (broken1list[i + NL*NoiseNo]==0 ? false : true);
-      bool broken2 = (broken1list[i + NL*NoiseNo]==0 ? false : true);
+      double N1 = N1list[LatticePoint];
+      double N2 = N2list[LatticePoint];
+      bool broken1 = (broken1list[LatticePoint]==0 ? false : true);
+      bool broken2 = (broken1list[LatticePoint]==0 ? false : true);
     #endif
 
     // stepper
@@ -337,8 +334,8 @@ void evolutionNoise(int NoiseNo) {
       }
     }
 
-    phievol[i + NL*NoiseNo] = phi;
-    Nnoise[i + NL*NoiseNo] = N;
+    phievol[LatticePoint] = phi;
+    Nnoise[LatticePoint] = N;
   }
 }
 
@@ -350,8 +347,9 @@ void dNmap(int NoiseNo, int InterpolatingNo) {
 #endif
   for (int i=0; i<NL; i++) {
     int numstep = 0;
-    double N = dN*(totalstep + InterpolatingNo*itpstep) + Nnoise[i + NL*NoiseNo];
-    state_type phi = phievol[i + NL*NoiseNo];
+    int LatticePoint = i + NL*NoiseNo;
+    double N = dN*(totalstep + InterpolatingNo*itpstep) + Nnoise[LatticePoint];
+    state_type phi = phievol[LatticePoint];
 
     // Find zero crossing time
     typedef boost::numeric::odeint::runge_kutta_dopri5<state_type>base_stepper_type;
@@ -396,8 +394,8 @@ void dNmap(int NoiseNo, int InterpolatingNo) {
       }
     }
 
-    Ndata[i + NL*NoiseNo] = N;
-    phievol[i + NL*NoiseNo] = phi;
+    Ndata[LatticePoint] = N;
+    phievol[LatticePoint] = phi;
   }
 }
 

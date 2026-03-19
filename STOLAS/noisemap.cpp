@@ -74,7 +74,6 @@ fftw_init_threads();
         }
       }
 
-      // std::cout << "\rExporting :       100%" << std::endl;
       std::cout << "\rNoiseGenerating : " << std::setw(3) << 100*l/(totalnoiseNo) << "%" << std::flush;
     }
     std::cout << "\rNoiseGenerating : 100%" << std::endl;
@@ -94,6 +93,10 @@ std::vector<double> dwlist(double N) {
   int count = 0;
   double nsigma = sigma*exp(N);
   std::vector<double> dwlist(NLnoise*NLnoise*NLnoise,0);
+
+  std::random_device seed;
+  std::mt19937 engine(seed()); // std::mt19937 engine(12345);
+  std::normal_distribution<> dist(0., 1.);
   
   LOOP{
     if (innsigma(i,j,k,NLnoise,nsigma,dn)) {
@@ -112,23 +115,9 @@ std::vector<double> dwlist(double N) {
   LOOP{
     if (innsigma(i,j,k,NLnoise,nsigma,dn)) {
       if (!(realpoint(i,j,k,NLnoise)||complexpoint(i,j,k,NLnoise))) {
-	if (i==0) {
-	  ip = 0;
-	} else {
-	  ip = NLnoise-i;
-	}
-	
-	if (j==0) {
-	  jp = 0;
-	} else {
-	  jp = NLnoise-j;
-	}
-	
-	if (k==0) {
-	  kp = 0;
-	} else {
-	  kp = NLnoise-k;
-	}
+  ip = (i==0 ? 0 : NLnoise-i);
+  jp = (j==0 ? 0 : NLnoise-j);
+  kp = (k==0 ? 0 : NLnoise-k);
 	
 	dwk[i][j][k] = conj(dwk[ip][jp][kp]);
 	count++;
