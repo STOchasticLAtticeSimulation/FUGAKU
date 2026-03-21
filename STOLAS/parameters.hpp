@@ -2,11 +2,11 @@
 #define INCLUDED_parameters_hpp_
 
 // Parameters of STOLAS
-const double sigma = 0.1;//pow(2.,-3.); // ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
+const double sigma = pow(2.,-3.); //0.1; // ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
 const double dn = 1; // Thickness of nsigma sphere shell
 constexpr int NLnoise = 64; // Box size L
 const int totalnoiseNo = pow(2,3); // The number of chunks
-const double dN = 0.01;///log2(exp(1)); // e-folds step
+const double dN = 0.01/log2(exp(1.)); // e-folds step
 const double Nprec = 1e-7; // Precision of e-foldings
 const double dlogn = 0.1; // Width of bin in power spectrum
 const double LL = 1.; // Box size L
@@ -23,13 +23,13 @@ const bool sfield = false; // Output field
 const bool strajectory = false; // Output the trajectory
 const bool spower = true; // Output the power spectrum
 bool sanimation = false; // Output the animation //hybrid
-const bool sweight = false; // Output the weight
-const bool scompaction = false; // Output the compaction
+const bool sweight = true; // Output the weight
+const bool scompaction = true; // Output the compaction
 
 // Importance sampling
 const double Nbias = 3.8; // Time of the bias
 const double dNbias = 0.1; // Variance of the bias
-const double bias = 0*sqrt(dNbias); // Amplitude of the bias
+const double bias = 30*sqrt(dNbias); // Amplitude of the bias
 
 // Directory name of saved data, you can change after "make clean" in your terminal.
 const std::string sdatadir = "data";

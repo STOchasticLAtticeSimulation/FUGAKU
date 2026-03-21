@@ -234,17 +234,19 @@ void evolution(int NoiseNo) {
           N0list[LatticePoint] = N;
         }
       #elif MODEL==2
-        if (broken2list[LatticePoint]==0 && phi[0] < phi1) {
+        if (broken1list[LatticePoint]==0 && phi[0] < phi1) {
           N1 = N;
           broken1 = true;
           broken1list[LatticePoint] = 1;
           N1list[LatticePoint] = N;
+          if(NoiseNo==0&&i==0) std::cout << "N1 = " << N1 << std::endl;
         }
         if (broken2list[LatticePoint]==0 && phi[0] < phi2) {
           N2 = N;
           broken2 = true;
           broken2list[LatticePoint] = 1;
           N2list[LatticePoint] = N;
+          if(NoiseNo==0&&i==0) std::cout << "N2 = " << N2 << std::endl;
         }
       #endif
 
