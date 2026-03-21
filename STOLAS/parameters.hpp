@@ -10,6 +10,7 @@ const double dN = 0.01/log2(exp(1.)); // e-folds step
 const double Nprec = 1e-7; // Precision of e-foldings
 const double dlogn = 0.1; // Width of bin in power spectrum
 const double LL = 1.; // Box size L
+const int seed_val = 1234;
 
 double nsigmareset = 8.;
 int aninum = 10; // dividing number for animation
@@ -29,7 +30,7 @@ const bool scompaction = true; // Output the compaction
 // Importance sampling
 const double Nbias = 3.8; // Time of the bias
 const double dNbias = 0.1; // Variance of the bias
-const double bias = 30*sqrt(dNbias); // Amplitude of the bias
+const double bias = 40*sqrt(dNbias); // Amplitude of the bias
 
 // Directory name of saved data, you can change after "make clean" in your terminal.
 const std::string sdatadir = "data";

@@ -19,6 +19,11 @@
 #define LOOP for(int i = 0; i < NLnoise; i++) for(int j = 0; j < NLnoise; j++) for(int k = 0; k < NLnoise; k++)
 const std::complex<double> II(0,1);
 
+// std::random_device seed;
+// std::mt19937 engine(seed());
+std::mt19937 engine(seed_val);
+std::normal_distribution<> dist(0., 1.);
+
 // judge if point is in nsigma sphere shell
 bool innsigma(int nx, int ny, int nz, int Num, double nsigma, double dn) {
   int nxt = (nx<=Num/2 ? nx : nx-Num);
