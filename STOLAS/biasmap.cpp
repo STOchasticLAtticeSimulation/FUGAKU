@@ -1,6 +1,6 @@
 #include "src/bias_noise.hpp"
 
-std::vector<double> biaslist(double N);
+std::vector<double> biaslist1D(double N);
 
 int main() 
 {
@@ -17,6 +17,11 @@ int main()
     int biasstepnum = firststep;
     if (n>0) biasstepnum = itpstep;
     if (n==internumber+1) biasstepnum = totalstep-firststep;
+
+    int divstep = int((biasstepnum)/totalnoiseNo);
+    int modstep = int((biasstepnum)%totalnoiseNo);
+    std::vector<std::vector<double>> biasdatadiv(divstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
+    std::vector<std::vector<double>> biasdatamod(modstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
 
     std::vector<std::unique_ptr<std::ofstream>> ofs_vector;
     for (int i = 0; i < totalnoiseNo; i++) {
@@ -38,41 +43,49 @@ fftw_init_threads();
 #endif
 
     std::cout << "Box size : " << NLnoise << "  Step number : " << biasstepnum << std::endl;
-    
-    int divstep = int((biasstepnum)/totalnoiseNo);
-    int modstep = int((biasstepnum)%totalnoiseNo);
-    
+
     for (int l=0; l<totalnoiseNo+1; l++) {
-      std::vector<std::vector<double>> biasdata;
       if (l<totalnoiseNo) {
-        biasdata = std::vector<std::vector<double>>(divstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
+        for (int i=0; i<divstep; i++) {
+          int Nstep = i+l*divstep;
+          if (n>0) Nstep += firststep-itpstep;
+          if (n==internumber+1) Nstep += itpstep;
+          if (l<totalnoiseNo || i<modstep) biasdatadiv[i] = biaslist1D(Nstep*dN);
+        }
+
+        for (size_t n = 0; n < biasdatadiv.size(); n++) {
+          int divcount = 0;
+          for (size_t m = 0; m < biasdatadiv[n].size(); m += NL) {
+            ofs_vector[divcount]->write(
+              reinterpret_cast<const char*>(&biasdatadiv[n][m]),
+              sizeof(double) * NL
+            );
+            divcount++;
+          }
+        }
       } else {
-        biasdata = std::vector<std::vector<double>>(modstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
-      }
+        for (int i=0; i<divstep; i++) {
+          int Nstep = i+l*divstep;
+          if (n>0) Nstep += firststep-itpstep;
+          if (n==internumber+1) Nstep += itpstep;
+          if (l<totalnoiseNo || i<modstep) biasdatamod[i] = biaslist1D(Nstep*dN);
+        }
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-      for (int i=0; i<divstep; i++) {
-        int Nstep = i+l*divstep;
-        if (n>0) Nstep += firststep-itpstep;
-        if (n==internumber+1) Nstep += itpstep;
-        if (l<totalnoiseNo || i<modstep) biasdata[i] = biaslist(Nstep*dN);
-      }
-
-      for (size_t n=0; n<biasdata.size(); n++) {
-        int divcount=0;
-        for (size_t m=0; m<biasdata[0].size(); m++) {
-          ofs_vector[divcount]->write(reinterpret_cast<const char*>(&biasdata[n][m]), sizeof(double));
-          if ((m+1)%NL==0) {
+        for (size_t n = 0; n < biasdatamod.size(); n++) {
+          int divcount = 0;
+          for (size_t m = 0; m < biasdatamod[n].size(); m += NL) {
+            ofs_vector[divcount]->write(
+              reinterpret_cast<const char*>(&biasdatamod[n][m]),
+              sizeof(double) * NL
+            );
             divcount++;
           }
         }
       }
 
-      std::cout << "\rBiasGenerating : " << std::setw(3) << 100*l/(totalnoiseNo) << "%" << std::flush;
+      // std::cout << "\rBiasGenerating : " << std::setw(3) << 100*l/(totalnoiseNo) << "%" << std::flush;
     }
-    std::cout << "\rBiasGenerating : 100%" << std::endl;
+    // std::cout << "\rBiasGenerating : 100%" << std::endl;
   }
 
   // ---------- stop timer ----------
@@ -82,30 +95,46 @@ fftw_init_threads();
   // -------------------------------------
 }
 
-
-
-std::vector<double> biaslist(double N) {
-  std::vector<std::vector<std::vector<std::complex<double>>>> bk(NLnoise, std::vector<std::vector<std::complex<double>>>(NLnoise, std::vector<std::complex<double>>(NLnoise, 0)));
+std::vector<double> biaslist1D(double N) {
   int count = 0;
   double nsigma = sigma*exp(N);
   std::vector<double> biaslist(NLnoise*NLnoise*NLnoise,0);
 
+  fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
+  fftw_complex* out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
+  for (int i = 0; i < NLnoiseAll; i++) {
+    in[i][0] = 0.0;
+    in[i][1] = 0.0;
+  }
+
   LOOP{
     if (innsigma(i,j,k,NLnoise,nsigma,dn)) {
-      bk[i][j][k] = 1;
+      int idx = i*NLnoise*NLnoise + j*NLnoise + k;
+      in[idx][0] = 1.0;
+      in[idx][1] = 0.0;
       count++;
     }
   }
 
   if (count==0) {
+    fftw_free(in);
+    fftw_free(out);
     return biaslist;
   }
-  bk /= count;
-
-  std::vector<std::vector<std::vector<std::complex<double>>>> biaslattice = fft_fftw(bk);
-  LOOP{
-    biaslist[i*NLnoise*NLnoise + j*NLnoise + k] = biaslattice[i][j][k].real();
+  for (int i = 0; i < NLnoiseAll; i++) {
+    in[i][0] /= count;
   }
+
+  fftw_plan plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+  fftw_execute(plan);
+
+  for (int i = 0; i < NLnoiseAll; i++) {
+    biaslist[i] = out[i][0];
+  }
+
+  fftw_destroy_plan(plan);
+  fftw_free(in);
+  fftw_free(out);
 
   return biaslist;
 }

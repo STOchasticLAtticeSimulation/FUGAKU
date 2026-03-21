@@ -2,7 +2,7 @@
 
 std::vector<double> dwlist(double N);
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
   if (argc!=2) {
     std::cout << "Specify the noise file number correctly." << std::endl;
@@ -21,6 +21,11 @@ int main(int argc, char* argv[])
     int noisestepnum = firststep;
     if (n>0) noisestepnum = itpstep;
     if (n==internumber+1) noisestepnum = totalstep-firststep;
+
+    int divstep = int((noisestepnum)/totalnoiseNo);
+    int modstep = int((noisestepnum)%totalnoiseNo);
+    std::vector<std::vector<double>> noisedatadiv(divstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
+    std::vector<std::vector<double>> noisedatamod(modstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
 
     std::vector<std::unique_ptr<std::ofstream>> ofs_vector;
     for (int i = 0; i < totalnoiseNo; i++) {
@@ -42,41 +47,49 @@ fftw_init_threads();
 #endif
 
     std::cout << "Box size : " << NLnoise << "  Step number : " << noisestepnum << std::endl;
-    
-    int divstep = int((noisestepnum)/totalnoiseNo);
-    int modstep = int((noisestepnum)%totalnoiseNo);
-    
+
     for (int l=0; l<totalnoiseNo+1; l++) {
-      std::vector<std::vector<double>> noisedata;
       if (l<totalnoiseNo) {
-        noisedata = std::vector<std::vector<double>>(divstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
+        for (int i=0; i<divstep; i++) {
+          int Nstep = i+l*divstep;
+          if (n>0) Nstep += firststep-itpstep;
+          if (n==internumber+1) Nstep += itpstep;
+          if (l<totalnoiseNo || i<modstep) noisedatadiv[i] = dwlist(Nstep*dN);
+        }
+
+        for (size_t n = 0; n < noisedatadiv.size(); n++) {
+          int divcount = 0;
+          for (size_t m = 0; m < noisedatadiv[n].size(); m += NL) {
+            ofs_vector[divcount]->write(
+              reinterpret_cast<const char*>(&noisedatadiv[n][m]),
+              sizeof(double) * NL
+            );
+            divcount++;
+          }
+        }
       } else {
-        noisedata = std::vector<std::vector<double>>(modstep, std::vector<double>(NLnoise*NLnoise*NLnoise,0));
-      }
+        for (int i=0; i<divstep; i++) {
+          int Nstep = i+l*divstep;
+          if (n>0) Nstep += firststep-itpstep;
+          if (n==internumber+1) Nstep += itpstep;
+          if (l<totalnoiseNo || i<modstep) noisedatamod[i] = dwlist(Nstep*dN);
+        }
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-      for (int i=0; i<divstep; i++) {
-        int Nstep = i+l*divstep;
-        if (n>0) Nstep += firststep-itpstep;
-        if (n==internumber+1) Nstep += itpstep;
-        if (l<totalnoiseNo || i<modstep) noisedata[i] = dwlist(Nstep*dN);
-      }
-
-      for (size_t n=0; n<noisedata.size(); n++) {
-        int divcount=0;
-        for (size_t m=0; m<noisedata[0].size(); m++) {
-          ofs_vector[divcount]->write(reinterpret_cast<const char*>(&noisedata[n][m]), sizeof(double));
-          if ((m+1)%NL==0) {
+        for (size_t n = 0; n < noisedatamod.size(); n++) {
+          int divcount = 0;
+          for (size_t m = 0; m < noisedatamod[n].size(); m += NL) {
+            ofs_vector[divcount]->write(
+              reinterpret_cast<const char*>(&noisedatamod[n][m]),
+              sizeof(double) * NL
+            );
             divcount++;
           }
         }
       }
 
-      std::cout << "\rNoiseGenerating : " << std::setw(3) << 100*l/(totalnoiseNo) << "%" << std::flush;
+      // std::cout << "\rBiasGenerating : " << std::setw(3) << 100*l/(totalnoiseNo) << "%" << std::flush;
     }
-    std::cout << "\rNoiseGenerating : 100%" << std::endl;
+    // std::cout << "\rBiasGenerating : 100%" << std::endl;
   }
 
   // ---------- stop timer ----------
@@ -86,25 +99,32 @@ fftw_init_threads();
   // -------------------------------------
 }
 
-
-
 std::vector<double> dwlist(double N) {
-  std::vector<std::vector<std::vector<std::complex<double>>>> dwk(NLnoise, std::vector<std::vector<std::complex<double>>>(NLnoise, std::vector<std::complex<double>>(NLnoise, 0)));
   int count = 0;
   double nsigma = sigma*exp(N);
   std::vector<double> dwlist(NLnoise*NLnoise*NLnoise,0);
 
-  std::random_device seed;
-  std::mt19937 engine(seed()); // std::mt19937 engine(12345);
+  // random distribution
+  // std::random_device seed;
+  std::mt19937 engine(12345); //std::mt19937 engine(seed()); // 
   std::normal_distribution<> dist(0., 1.);
-  
+
+  fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
+  fftw_complex* out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
+  for (int i = 0; i < NLnoiseAll; i++) {
+    in[i][0] = 0.0;
+    in[i][1] = 0.0;
+  }
+
   LOOP{
+    int idx = i*NLnoise*NLnoise + j*NLnoise + k;
     if (innsigma(i,j,k,NLnoise,nsigma,dn)) {
       if (realpoint(i,j,k,NLnoise)) {
-	dwk[i][j][k] = dist(engine);
+	in[idx][0] = dist(engine);
 	count++;
       } else if (complexpoint(i,j,k,NLnoise)) {
-	dwk[i][j][k] = (dist(engine) + II*dist(engine))/sqrt(2);
+	in[idx][0] = dist(engine)/sqrt(2);
+	in[idx][1] = dist(engine)/sqrt(2);
 	count++;
       }
     }
@@ -113,27 +133,41 @@ std::vector<double> dwlist(double N) {
   // reflection
   int ip, jp, kp; // reflected index
   LOOP{
+    int idx = i*NLnoise*NLnoise + j*NLnoise + k;
     if (innsigma(i,j,k,NLnoise,nsigma,dn)) {
       if (!(realpoint(i,j,k,NLnoise)||complexpoint(i,j,k,NLnoise))) {
-  ip = (i==0 ? 0 : NLnoise-i);
-  jp = (j==0 ? 0 : NLnoise-j);
-  kp = (k==0 ? 0 : NLnoise-k);
+        ip = (i==0 ? 0 : NLnoise-i);
+        jp = (j==0 ? 0 : NLnoise-j);
+        kp = (k==0 ? 0 : NLnoise-k);
 	
-	dwk[i][j][k] = conj(dwk[ip][jp][kp]);
+	in[idx][0] = in[ip*NLnoise*NLnoise + jp*NLnoise + kp][0];
+	in[idx][1] = -in[ip*NLnoise*NLnoise + jp*NLnoise + kp][1];
 	count++;
       }
     }
   }
 
   if (count==0) {
+    fftw_free(in);
+    fftw_free(out);
     return dwlist;
   }
-  dwk /= sqrt(count);
 
-  std::vector<std::vector<std::vector<std::complex<double>>>> dwlattice = fft_fftw(dwk);
-  LOOP{
-    dwlist[i*NLnoise*NLnoise + j*NLnoise + k] = dwlattice[i][j][k].real();
+  for (int i = 0; i < NLnoiseAll; i++) {
+    in[i][0] /= sqrt(count);
+    in[i][1] /= sqrt(count);
   }
+
+  fftw_plan plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+  fftw_execute(plan);
+
+  for (int i = 0; i < NLnoiseAll; i++) {
+    dwlist[i] = out[i][0];
+  }
+
+  fftw_destroy_plan(plan);
+  fftw_free(in);
+  fftw_free(out);
 
   return dwlist;
 }
