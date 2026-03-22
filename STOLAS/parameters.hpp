@@ -30,7 +30,7 @@ const bool scompaction = true; // Output the compaction
 // Importance sampling
 const double Nbias = 3.8; // Time of the bias
 const double dNbias = 0.1; // Variance of the bias
-const double bias = 40*sqrt(dNbias); // Amplitude of the bias
+const double bias = 0*sqrt(dNbias); // Amplitude of the bias
 
 // Directory name of saved data, you can change after "make clean" in your terminal.
 const std::string sdatadir = "data";
