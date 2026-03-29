@@ -207,29 +207,18 @@ void evolution(int seed) {
 }
 
 
-void evolutionNoise(int NoiseNo) {
-
+void evolutionNoise(int seed) {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
   for (int i=0; i<NLnoiseAll; i++) {
     double N = 0;
-    int LatticePoint = i + NLnoiseAll*NoiseNo;
+    int LatticePoint = i;// + NLnoiseAll*NoiseNo;
     
-    std::mt19937 engine(1 + LatticePoint); // generate random noise for each thread
+    std::mt19937 engine(seed + LatticePoint); // generate random noise for each thread
     std::normal_distribution<> dist(0., 1.);
 
     state_type phi = phievol[LatticePoint];
-
-    #if MODEL==1
-      double N0 = N0list[LatticePoint];
-      bool broken = (brokenlist[LatticePoint]==0 ? false : true);
-    #elif MODEL==2
-      double N1 = N1list[LatticePoint];
-      double N2 = N2list[LatticePoint];
-      bool broken1 = (broken1list[LatticePoint]==0 ? false : true);
-      bool broken2 = (broken1list[LatticePoint]==0 ? false : true);
-    #endif
 
     // stepper
     boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
@@ -244,9 +233,9 @@ void evolutionNoise(int NoiseNo) {
           phi[2*nf] += psiamp * dw * sqrt_dN;
         }
       #elif MODEL==2
-        double phiamp = sqrt(calPphi(N,phi,N1,N2,broken1,broken2));
-        double piamp = sqrt(calPpi(N,phi,N1,N2,broken1,broken2));
-        double crosscor = RecalPphipi(N,phi,N1,N2,broken1,broken2);
+        double phiamp = sqrt(calPphi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]));
+        double piamp = sqrt(calPpi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]));
+        double crosscor = RecalPphipi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]);
         
         stepper_noise.do_step(dphidN, phi, N, dN);
         N += dN;
@@ -254,9 +243,9 @@ void evolutionNoise(int NoiseNo) {
         double dw = dist(engine);
         phi[0] += phiamp * dw * sqrt_dN;
       #elif MODEL==1
-        double phiamp = sqrt(calPphi(N,phi,N0,broken));
-        double piamp = sqrt(calPpi(N,phi,N0,broken));
-        double crosscor = RecalPphipi(N,phi,N0,broken);
+        double phiamp = sqrt(calPphi(N,phi,N0list[i],brokenlist[i]));
+        double piamp = sqrt(calPpi(N,phi,N0list[i],brokenlist[i]));
+        double crosscor = RecalPphipi(N,phi,N0list[i],brokenlist[i]);
       #else
         double phiamp = sqrt(calPphi(phi));
         
@@ -266,7 +255,8 @@ void evolutionNoise(int NoiseNo) {
         double dw = dist(engine);
         phi[0] += phiamp * dw * sqrt_dN;
       #endif
-      if(strajectory && i==0 && NoiseNo==0 && superH) {
+
+      if(strajectory && i==0 && superH) {
         save_trajectory(phi, N+dN*totalstep);
       }
     }

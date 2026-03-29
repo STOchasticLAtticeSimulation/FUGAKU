@@ -41,8 +41,9 @@ fftw_init_threads();
       return -1;
     }
 
-
     evolution(seed_val);
+    if(EoI_noise) evolutionNoise(seed_val);
+
     dNmap(interpolatingnumber);
 
     save_zeta(); // svave delta N map
