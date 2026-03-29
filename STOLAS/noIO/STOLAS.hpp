@@ -12,13 +12,15 @@
 #include <random>
 #include <sys/time.h>
 #include <complex>
+#include <bit>
 #include <boost/numeric/odeint.hpp>
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
-#define euler_gamma 0.57721566490153286061
+constexpr double euler_gamma = 0.57721566490153286061;
+constexpr double LOG2 = 0.69314718055994530942;
 const std::complex<double> II(0, 1);
 std::normal_distribution<> dist(0., 1.);
 
@@ -43,13 +45,13 @@ bool noisefilefail, biasfilefail, Nfilefail, superH = false;
 int Nn, noisefiledirNo, noisefileNo;
 std::ofstream Nfile, fieldfile, fieldfileA, trajectoryfile, powfile, powsfile, cmpfile, prbfile, logwfile;
 std::array<double,NLnoiseAll> Ndata{};
-std::vector<std::vector<std::vector<std::complex<double>>>> Nmap3D;
+// std::vector<std::vector<std::vector<std::complex<double>>>> Nmap3D;
 
 // state_type phii{};
 std::array<state_type,NLnoiseAll> Phidata{};
 std::array<state_type,NLnoiseAll> phievol{};
 std::array<state_type,NLnoiseAll> PhidataAv{};
-std::vector<std::vector<std::vector<double>>> phianimation;
+// std::vector<std::vector<std::vector<double>>> phianimation;
 
 std::array<double,NLnoiseAll> Nnoise{};
 std::array<double,NLnoiseAll> Naverage{};
@@ -58,7 +60,11 @@ std::array<double,NLnoiseAll> Ntotal{};
 std::array<std::array<double,NLnoiseAll>,NFIELDS+1> biaslist{};
 std::array<std::array<double,NLnoiseAll>,NFIELDS+1> dwlist{};
 
+// output
+std::array<double,imax> disc_power{};
 std::array<double,100*NLnoise> weightlist{};
+std::array<std::array<double,NLnoise/2>,2> zetar{};
+std::array<double,NLnoise/2> dzetar{};
 
 #if MODEL==1
 std::array<double,NLnoiseAll> N0list{};
@@ -87,7 +93,7 @@ void initialize(){
   }
   #endif
 
-  LOOPLONG{
+  LOOP{
     phievol[NLnoise*NLnoise*i + NLnoise*j + k] = phii;
   }
 }
@@ -132,7 +138,7 @@ void dwlist_gen(double N, std::mt19937& engine) {
     in[i][1] = 0.0;
   }
   
-  LOOPLONG{
+  LOOP{
     int idx = i*NLnoise*NLnoise + j*NLnoise + k;
     if (innsigma(i,j,k,NLnoise,nsigma,dn)) {
       if (realpoint(i,j,k,NLnoise)) {
@@ -148,7 +154,7 @@ void dwlist_gen(double N, std::mt19937& engine) {
 
   // reflection
   int ip, jp, kp; // reflected index
-  LOOPLONG{
+  LOOP{
     int idx = i*NLnoise*NLnoise + j*NLnoise + k;
     if (innsigma(i,j,k,NLnoise,nsigma,dn)) {
       if (!(realpoint(i,j,k,NLnoise)||complexpoint(i,j,k,NLnoise))) {
@@ -200,7 +206,7 @@ void biaslist1D(double N) {
     in[i][1] = 0.0;
   }
 
-  LOOPLONG{
+  LOOP{
     if (innsigma(i,j,k,NLnoise,nsigma,dn)) {
       int idx = i*NLnoise*NLnoise + j*NLnoise + k;
       in[idx][0] = 1.0;
@@ -246,7 +252,7 @@ void evolution(int seed) {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (int i=0; i<NL; i++){
+    for (int i=0; i<NLnoiseAll; i++){
       boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
       state_type phi = phievol[i];
       
@@ -313,14 +319,14 @@ void evolution(int seed) {
         save_trajectory(phi, Nd);
       }
 
-      animationcount++;
-      if(sanimation && animationcount>aninum-1){
-        int ef = int(n/aninum);
-        NFLOOP{
-          phianimation[ef][i][2*nf] = phi[2*nf];
-        }
-        animationcount=0;
-      }
+      // animationcount++;
+      // if(sanimation && animationcount>aninum-1){
+      //   int ef = int(n/aninum);
+      //   NFLOOP{
+      //     phianimation[ef][i][2*nf] = phi[2*nf];
+      //   }
+      //   animationcount=0;
+      // }
     }
 
     N += dN;
@@ -334,9 +340,9 @@ void evolutionNoise(int NoiseNo) {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-  for (int i=0; i<NL; i++) {
+  for (int i=0; i<NLnoiseAll; i++) {
     double N = 0;
-    int LatticePoint = i + NL*NoiseNo;
+    int LatticePoint = i + NLnoiseAll*NoiseNo;
     
     std::mt19937 engine(1 + LatticePoint); // generate random noise for each thread
     std::normal_distribution<> dist(0., 1.);
@@ -404,7 +410,7 @@ void dNmap(int InterpolatingNo) {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-  for (int i=0; i<NL; i++) {
+  for (int i=0; i<NLnoiseAll; i++) {
     int numstep = 0;
     int LatticePoint = i;
     double N = dN*(totalstep + InterpolatingNo*itpstep) + Nnoise[LatticePoint];

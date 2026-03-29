@@ -2,8 +2,7 @@
 #define INCLUDED_util_hpp_
 
 // useful macro
-#define LOOP for(int i = 0; i < NL; i++) for(int j = 0; j < NL; j++) for(int k = 0; k < NL; k++)
-#define LOOPLONG for(int i = 0; i < NLnoise; i++) for(int j = 0; j < NLnoise; j++) for(int k = 0; k < NLnoise; k++)
+#define LOOP for(int i = 0; i < NLnoise; i++) for(int j = 0; j < NLnoise; j++) for(int k = 0; k < NLnoise; k++)
 
 inline int index(int i, int j, int k) {
   return i * NLnoise * NLnoise + j * NLnoise + k;

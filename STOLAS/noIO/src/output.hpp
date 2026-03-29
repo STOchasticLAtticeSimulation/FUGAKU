@@ -20,9 +20,9 @@ void OpenFiles(int NoisefiledirNo, int Interpolatingnumber){
     trajectoryfile << std::setprecision(10);
   }
 
-  if (sanimation) {
-    phianimation=std::vector<std::vector<std::vector<double>>> (int(totalstep/aninum),std::vector<std::vector<double>>(NLnoiseAll, std::vector<double>(NumFields,0.)));
-  }
+  // if (sanimation) {
+  //   phianimation=std::vector<std::vector<std::vector<double>>> (int(totalstep/aninum),std::vector<std::vector<double>>(NLnoiseAll, std::vector<double>(NumFields,0.)));
+  // }
 
   if (sweight) {
     logwfile.open(logwfileprefix + InterFileName);
@@ -31,7 +31,7 @@ void OpenFiles(int NoisefiledirNo, int Interpolatingnumber){
 }
 
 void save_zeta(){
-  for (int i=0; i<NL; i++){
+  for (int i=0; i<NLnoiseAll; i++){
     double Nsave = 0.;
     Nsave = Ndata[i];
     Nfile << i << ' ' << Nsave << std::endl;
@@ -39,7 +39,7 @@ void save_zeta(){
 }
 
 void save_field(){
-  for (int i=0; i<NL; i++) {
+  for (int i=0; i<NLnoiseAll; i++) {
     fieldfile << i << ' ';
     #if MODEL==3
       NFLOOP{
@@ -66,66 +66,70 @@ void save_trajectory(state_type PHI, double Ntime){
 void animation(int NoisefiledirNo, int EachField){
   std::cout << "ExportAnimation" << std::endl;
 
-  if (EachField==0){
-    for (int n = 0; n < phianimation.size(); n++) {
-      std::string fFileName = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo) + std::string("_") + std::to_string(n);
-      fieldfileA.open(animationfileprefix + fFileName + std::string(".dat"));
-      fieldfileA << std::setprecision(10);
+  // if (EachField==0){
+  //   for (int n = 0; n < phianimation.size(); n++) {
+  //     std::string fFileName = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo) + std::string("_") + std::to_string(n);
+  //     fieldfileA.open(animationfileprefix + fFileName + std::string(".dat"));
+  //     fieldfileA << std::setprecision(10);
 
-      for (int i=0; i<phianimation[n].size(); i++) {
-        double PSISUM = 0;
-        NFLOOP{
-          PSISUM += pw2(phianimation[n][i][2*nf]);
-        }
-        fieldfileA << sqrt(PSISUM) << ' ';
-      }
-      fieldfileA << std::endl;
-      fieldfileA.close();
-    }
-  }
-  else{ // export each field
-    NFLOOP{
-      std::string fFileName = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(noisefiledirNo);
-      fieldfileA.open(animationfileprefix + fFileName + std::string("_") + std::to_string(nf) + std::string(".dat"));
-      fieldfileA << std::setprecision(10);
+  //     for (int i=0; i<phianimation[n].size(); i++) {
+  //       double PSISUM = 0;
+  //       NFLOOP{
+  //         PSISUM += pw2(phianimation[n][i][2*nf]);
+  //       }
+  //       fieldfileA << sqrt(PSISUM) << ' ';
+  //     }
+  //     fieldfileA << std::endl;
+  //     fieldfileA.close();
+  //   }
+  // }
+  // else{ // export each field
+  //   NFLOOP{
+  //     std::string fFileName = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(noisefiledirNo);
+  //     fieldfileA.open(animationfileprefix + fFileName + std::string("_") + std::to_string(nf) + std::string(".dat"));
+  //     fieldfileA << std::setprecision(10);
 
-      for (int n = 0; n < phianimation.size(); n++) {
-        for (int i=0; i<phianimation[n].size(); i++) {
-          fieldfileA << phianimation[n][i][2*nf] << ' ';
-        }
-        fieldfileA << std::endl;
-      }
-      fieldfileA.close();
-    }
-  }
+  //     for (int n = 0; n < phianimation.size(); n++) {
+  //       for (int i=0; i<phianimation[n].size(); i++) {
+  //         fieldfileA << phianimation[n][i][2*nf] << ' ';
+  //       }
+  //       fieldfileA << std::endl;
+  //     }
+  //     fieldfileA.close();
+  //   }
+  // }
 }
 
 
 // Calculate power spectrum
 void spectrum(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
-  std::vector<std::vector<std::vector<std::complex<double>>>> Nmap3D = std::vector<std::vector<std::vector<std::complex<double>>>>(NLnoise, std::vector<std::vector<std::complex<double>>>(NLnoise, std::vector<std::complex<double>>(NLnoise, 0)));
+  // std::vector<std::vector<std::vector<std::complex<double>>>> Nmap3D = std::vector<std::vector<std::vector<std::complex<double>>>>(NLnoise, std::vector<std::vector<std::complex<double>>>(NLnoise, std::vector<std::complex<double>>(NLnoise, 0)));
 
-  for (int i=0; i<NLnoise*NLnoise*NLnoise; i++) {
-    int x=i/NLnoise/NLnoise ,y=(i%(NLnoise*NLnoise))/NLnoise, z=i%NLnoise;
-    Nmap3D[x][y][z] = Ndata[i];
-  }
-  std::vector<std::vector<std::vector<std::complex<double>>>> Nk=fft_fftw(Nmap3D);
+  // for (int i=0; i<NLnoiseAll; i++) {
+  //   int x=i/NLnoise/NLnoise ,y=(i%(NLnoise*NLnoise))/NLnoise, z=i%NLnoise;
+  //   Nmap3D[x][y][z] = Ndata[i];
+  // }
+  // std::vector<std::vector<std::vector<std::complex<double>>>> Nk=fft_fftw(Nmap3D);
+  fft_1D_real(Ndata);
   
   powsfile.open(powsfileprefix + std::string(".dat"), std::ios::app);
   powsfile << std::setprecision(10);
-  int imax = ceil(log(NLnoise/2)/dlogn);
-  std::vector<double> disc_power(imax, 0);
+  // int imax = ceil(log(NLnoise/2)/dlogn);
+  // constexpr int imax = (LOG2*(NLpower-1) + dlogn - 1) / dlogn;
+  // std::vector<double> disc_power(imax, 0);
 
-  LOOPLONG{
+  LOOP{
     int nxt, nyt, nzt; // shifted index
     nxt = (i<=NLnoise/2 ? i : i-NLnoise);
     nyt = (j<=NLnoise/2 ? j : j-NLnoise);
     nzt = (k<=NLnoise/2 ? k : k-NLnoise);
+    int idx = i*NLnoise*NLnoise + j*NLnoise + k;
     
     double rk=nxt*nxt+nyt*nyt+nzt*nzt;
 
     double LogNk = log(sqrt(rk));
-    double calPk = norm(Nk[i][j][k])/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise;
+    // double calPk = norm(Nk[i][j][k])/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise;
+    double calPk = norm(bkspectrum[idx])/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise;
     for (size_t ii = 0; ii < imax; ii++) {
       if ((dlogn*ii-LogNk)<dlogn/2. && -dlogn/2.<=(dlogn*ii-LogNk) && rk!=0) {
         disc_power[ii] += calPk/dlogn;
@@ -176,10 +180,11 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
 
   // Find max value
   int maxNpoint = std::distance(Ndata.begin(), std::max_element(Ndata.begin(), Ndata.end()));
-  int xmax = maxNpoint/NLnoise/NLnoise, ymax = (maxNpoint%(NLnoise*NLnoise))/NLnoise, zmax = maxNpoint%NLnoise;
+  // int xmax = maxNpoint/NLnoise/NLnoise, ymax = (maxNpoint%(NLnoise*NLnoise))/NLnoise, zmax = maxNpoint%NLnoise;
+  int xmax = 0, ymax = 0, zmax = 0;
 
   // radial profile
-  std::vector<std::vector<double>> zetar(2, std::vector<double>(NLnoise/2,0));
+  // std::vector<std::vector<double>> zetar(2, std::vector<double>(NLnoise/2,0));
   for (size_t i=0; i<NLnoise*NLnoise*NLnoise; i++) {
     int nx=i/NLnoise/NLnoise ,ny=(i%(NLnoise*NLnoise))/NLnoise, nz=i%NLnoise;
     
@@ -203,7 +208,7 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   }
 
   // derivative zeta
-  std::vector<double> dzetar(NLnoise/2,0);
+  // std::vector<double> dzetar(NLnoise/2,0);
   for (size_t ri=1; ri<NLnoise/2-1; ri++) {
     dzetar[ri] = (zetar[1][ri+1] - zetar[1][ri-1])/(2.*dr);
   }

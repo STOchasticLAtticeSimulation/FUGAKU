@@ -1,6 +1,7 @@
 *
 !*.*
 !*/
+!Makefile
 *.dat
 *.o
 *.img

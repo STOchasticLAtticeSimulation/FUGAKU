@@ -55,7 +55,7 @@ double LinearInterplation(std::vector<std::vector<std::vector<double>>> LatticeF
 int findMaxZeta(){
   std::vector<double> Nblock(8,0);
 
-  LOOPLONG{
+  LOOP{
     int idxsum = (i < NLnoise/2 ? 0 : 1) + (j < NLnoise/2 ? 0 : 2) + (k < NLnoise/2 ? 0 : 4);
     int idxf = index(i,j,k);
     NFLOOP{
