@@ -49,7 +49,6 @@ fftw_init_threads();
     if(sfield) save_field();
     if(spower) spectrum(Ndata,interpolatingnumber);
     if(sweight) weight();
-    if(sanimation && interpolatingnumber==0) animation(noisefiledirNo,0);
     if(scompaction) compaction(Ndata,noisefiledirNo);
     Nfile.close();
     fieldfile.close();

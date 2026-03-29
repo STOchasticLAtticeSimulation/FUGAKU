@@ -63,13 +63,12 @@ int Nn, noisefiledirNo, noisefileNo;
 std::ofstream Nfile, fieldfile, fieldfileA, trajectoryfile, powfile, powsfile, cmpfile, prbfile, logwfile;
 std::array<double,NLnoiseAll> Ndata{};
 
-std::array<state_type,NLnoiseAll> Phidata{};
 std::array<state_type,NLnoiseAll> phievol{};
-std::array<state_type,NLnoiseAll> PhidataAv{};
-// std::vector<std::vector<std::vector<double>>> phianimation;
+// std::array<state_type,NLnoiseAll> Phidata{};
+// std::array<state_type,NLnoiseAll> PhidataAv{};
 
 std::array<double,NLnoiseAll> Nnoise{};
-std::array<double,NLnoiseAll> Ntotal{};
+// std::array<double,NLnoiseAll> Ntotal{};
 
 std::array<std::array<double,NLnoiseAll>,NFIELDS+1> biaslist{};
 std::array<std::array<double,NLnoiseAll>,NFIELDS+1> dwlist{};
@@ -117,6 +116,7 @@ void initialize(){
 void evolution(int seed) {
   double N = 0;
   int animationcount = 0; // for animation
+  int animationstep = 0;
   std::mt19937 engine(seed);
 
   for (size_t n=0; n<totalstep; n++){
@@ -192,15 +192,13 @@ void evolution(int seed) {
         double Nd = N;
         save_trajectory(phi, Nd);
       }
+    }
 
-      // animationcount++;
-      // if(sanimation && animationcount>aninum-1){
-      //   int ef = int(n/aninum);
-      //   NFLOOP{
-      //     phianimation[ef][i][2*nf] = phi[2*nf];
-      //   }
-      //   animationcount=0;
-      // }
+    animationcount++;
+    if(sanimation && animationcount>aninum-1){
+      animation(phievol, seed, animationstep);
+      animationstep++;
+      animationcount=0;
     }
 
     N += dN;

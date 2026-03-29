@@ -20,10 +20,6 @@ void OpenFiles(int NoisefiledirNo, int Interpolatingnumber){
     trajectoryfile << std::setprecision(10);
   }
 
-  // if (sanimation) {
-  //   phianimation=std::vector<std::vector<std::vector<double>>> (int(totalstep/aninum),std::vector<std::vector<double>>(NLnoiseAll, std::vector<double>(NumFields,0.)));
-  // }
-
   if (sweight) {
     logwfile.open(logwfileprefix + InterFileName);
   }
@@ -35,21 +31,19 @@ void save_zeta(){
     double Nsave = 0.;
     Nsave = Ndata[i];
     Nfile << i << ' ' << Nsave << std::endl;
-    }
+  }
 }
 
 void save_field(){
   for (int i=0; i<NLnoiseAll; i++) {
-    fieldfile << i << ' ';
     #if MODEL==3
       NFLOOP{
         fieldfile << phievol[i][2*nf] << ' ';
       }
+      fieldfile << std::endl;
     #else
-      fieldfile << phievol[i][0] << ' ';
+      fieldfile << phievol[i][0] << std::endl;
     #endif
-
-    fieldfile << std::endl;
   }
 }
 
@@ -63,41 +57,22 @@ void save_trajectory(state_type PHI, double Ntime){
   trajectoryfile << std::endl;
 }
 
-void animation(int NoisefiledirNo, int EachField){
-  std::cout << "ExportAnimation" << std::endl;
+void animation(std::array<state_type,NLnoiseAll>& phievol, int NoisefiledirNo, int Ntime){
+  std::string fFileName = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo) + std::string("_") + std::to_string(Ntime);
+  fieldfileA.open(animationfileprefix + fFileName + std::string(".dat"));
+  fieldfileA << std::setprecision(10);
 
-  // if (EachField==0){
-  //   for (int n = 0; n < phianimation.size(); n++) {
-  //     std::string fFileName = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo) + std::string("_") + std::to_string(n);
-  //     fieldfileA.open(animationfileprefix + fFileName + std::string(".dat"));
-  //     fieldfileA << std::setprecision(10);
+  for (int i=0; i<NLnoiseAll; i++){
+    fieldfileA << phievol[i][1] << ' ' << hubble(phievol[i]) << std::endl;
 
-  //     for (int i=0; i<phianimation[n].size(); i++) {
-  //       double PSISUM = 0;
-  //       NFLOOP{
-  //         PSISUM += pw2(phianimation[n][i][2*nf]);
-  //       }
-  //       fieldfileA << sqrt(PSISUM) << ' ';
-  //     }
-  //     fieldfileA << std::endl;
-  //     fieldfileA.close();
-  //   }
-  // }
-  // else{ // export each field
-  //   NFLOOP{
-  //     std::string fFileName = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(noisefiledirNo);
-  //     fieldfileA.open(animationfileprefix + fFileName + std::string("_") + std::to_string(nf) + std::string(".dat"));
-  //     fieldfileA << std::setprecision(10);
+    #if MODEL==3
+      double PSISUM = 0;
+      NFLOOP PSISUM += pw2(phievol[i][2*nf]);
+      fieldfileA << sqrt(PSISUM) << std::endl;
 
-  //     for (int n = 0; n < phianimation.size(); n++) {
-  //       for (int i=0; i<phianimation[n].size(); i++) {
-  //         fieldfileA << phianimation[n][i][2*nf] << ' ';
-  //       }
-  //       fieldfileA << std::endl;
-  //     }
-  //     fieldfileA.close();
-  //   }
-  // }
+    #endif
+  }
+  fieldfileA.close();
 }
 
 
