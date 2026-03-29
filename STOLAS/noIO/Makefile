@@ -16,7 +16,7 @@ all: $(MODEL)
 $(MODEL): $(MODEL).o
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-$(MODEL).o: src/vec_op.hpp src/array_op.hpp STOLAS.hpp parameters.hpp model.hpp src/fft.hpp src/zoom.hpp src/laplacian.hpp src/output.hpp
+$(MODEL).o: src/vec_op.hpp src/array_op.hpp STOLAS.hpp parameters.hpp model.hpp src/fft.hpp src/noise_bias.hpp src/zoom.hpp src/laplacian.hpp src/output.hpp
 
 
 clean:
