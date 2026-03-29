@@ -213,12 +213,11 @@ void evolutionNoise(int seed) {
 #endif
   for (int i=0; i<NLnoiseAll; i++) {
     double N = 0;
-    int LatticePoint = i;// + NLnoiseAll*NoiseNo;
     
-    std::mt19937 engine(seed + LatticePoint); // generate random noise for each thread
+    std::mt19937 engine(seed + i); // generate random noise for each thread
     std::normal_distribution<> dist(0., 1.);
 
-    state_type phi = phievol[LatticePoint];
+    state_type phi = phievol[i];
 
     // stepper
     boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
@@ -261,8 +260,8 @@ void evolutionNoise(int seed) {
       }
     }
 
-    phievol[LatticePoint] = phi;
-    Nnoise[LatticePoint] = N;
+    phievol[i] = phi;
+    Nnoise[i] = N;
   }
 }
 
