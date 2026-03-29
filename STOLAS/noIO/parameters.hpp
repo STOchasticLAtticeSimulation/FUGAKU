@@ -1,11 +1,6 @@
 #ifndef INCLUDED_parameters_hpp_
 #define INCLUDED_parameters_hpp_
 
-
-constexpr int log2_int(unsigned int x) {
-    return std::countr_zero(x);
-}
-
 // Parameters of STOLAS
 const double sigma = pow(2.,-4.); //0.1; // ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
 constexpr double dn = 1; // Thickness of nsigma sphere shell
@@ -38,18 +33,13 @@ const double bias = 20*sqrt(dNbias); // Amplitude of the bias
 
 // Directory name of saved data, you can change after "make clean" in your terminal.
 const std::string sdatadir = "data";
-// const std::string sourcedir = "../source";
-// const std::string noisefiledir = "noisedata/noiselist_";
-// const std::string biasfiledir = "biasdata/biaslist";
-// const std::string noisefilenamediv = "/part_";
 
 
-// const int NL = pow(NLnoise,3)/totalnoiseNo; // Box size L for each noisemap
-double sqrt_dN = std::sqrt(dN);
+const double sqrt_dN = std::sqrt(dN);
 constexpr int NLnoiseAll = NLnoise*NLnoise*NLnoise;
-int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN); // Total number of time step with noise
-int firststep = ceil(log(nsigmareset/sigma)/dN);
-int itpstep = ceil((log(nsigmareset/sigma)-log(nsigmareset/sigma/2.))/dN);
+const int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN); // Total number of time step with noise
+const int firststep = ceil(log(nsigmareset/sigma)/dN);
+const int itpstep = ceil((log(nsigmareset/sigma)-log(nsigmareset/sigma/2.))/dN);
 constexpr double dx = LL/NLnoise; // Spacing of each lattice
 constexpr int NLpower = log2_int(NLnoise);
 constexpr double imax_double = LOG2*(NLpower-1) / dlogn;

@@ -24,6 +24,11 @@ constexpr double LOG2 = 0.69314718055994530942;
 const std::complex<double> II(0, 1);
 std::normal_distribution<> dist(0., 1.);
 
+constexpr int log2_int(unsigned int x) {
+  return std::countr_zero(x);
+}
+
+
 #include "parameters.hpp"
 #include "model.hpp"
 #include "src/vec_op.hpp"
@@ -45,7 +50,6 @@ bool noisefilefail, biasfilefail, Nfilefail, superH = false;
 int Nn, noisefiledirNo, noisefileNo;
 std::ofstream Nfile, fieldfile, fieldfileA, trajectoryfile, powfile, powsfile, cmpfile, prbfile, logwfile;
 std::array<double,NLnoiseAll> Ndata{};
-// std::vector<std::vector<std::vector<std::complex<double>>>> Nmap3D;
 
 // state_type phii{};
 std::array<state_type,NLnoiseAll> Phidata{};
@@ -54,7 +58,6 @@ std::array<state_type,NLnoiseAll> PhidataAv{};
 // std::vector<std::vector<std::vector<double>>> phianimation;
 
 std::array<double,NLnoiseAll> Nnoise{};
-std::array<double,NLnoiseAll> Naverage{};
 std::array<double,NLnoiseAll> Ntotal{};
 
 std::array<std::array<double,NLnoiseAll>,NFIELDS+1> biaslist{};

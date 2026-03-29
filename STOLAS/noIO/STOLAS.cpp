@@ -44,7 +44,7 @@ fftw_init_threads();
 
     evolution(seed_val);
     dNmap(interpolatingnumber);
-    Naverage = Ndata;
+
     save_zeta(); // svave delta N map
     if(sfield) save_field();
     if(spower) spectrum(Ndata,interpolatingnumber);

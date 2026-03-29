@@ -102,21 +102,11 @@ void animation(int NoisefiledirNo, int EachField){
 
 
 // Calculate power spectrum
-void spectrum(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
-  // std::vector<std::vector<std::vector<std::complex<double>>>> Nmap3D = std::vector<std::vector<std::vector<std::complex<double>>>>(NLnoise, std::vector<std::vector<std::complex<double>>>(NLnoise, std::vector<std::complex<double>>(NLnoise, 0)));
-
-  // for (int i=0; i<NLnoiseAll; i++) {
-  //   int x=i/NLnoise/NLnoise ,y=(i%(NLnoise*NLnoise))/NLnoise, z=i%NLnoise;
-  //   Nmap3D[x][y][z] = Ndata[i];
-  // }
-  // std::vector<std::vector<std::vector<std::complex<double>>>> Nk=fft_fftw(Nmap3D);
-  fft_1D_real(Ndata);
-  
+void spectrum(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {  
   powsfile.open(powsfileprefix + std::string(".dat"), std::ios::app);
   powsfile << std::setprecision(10);
-  // int imax = ceil(log(NLnoise/2)/dlogn);
-  // constexpr int imax = (LOG2*(NLpower-1) + dlogn - 1) / dlogn;
-  // std::vector<double> disc_power(imax, 0);
+
+  fft_1D_real(Ndata);
 
   LOOP{
     int nxt, nyt, nzt; // shifted index
@@ -128,7 +118,6 @@ void spectrum(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
     double rk=nxt*nxt+nyt*nyt+nzt*nzt;
 
     double LogNk = log(sqrt(rk));
-    // double calPk = norm(Nk[i][j][k])/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise;
     double calPk = norm(bkspectrum[idx])/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise;
     for (size_t ii = 0; ii < imax; ii++) {
       if ((dlogn*ii-LogNk)<dlogn/2. && -dlogn/2.<=(dlogn*ii-LogNk) && rk!=0) {
@@ -184,7 +173,6 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   int xmax = 0, ymax = 0, zmax = 0;
 
   // radial profile
-  // std::vector<std::vector<double>> zetar(2, std::vector<double>(NLnoise/2,0));
   for (size_t i=0; i<NLnoise*NLnoise*NLnoise; i++) {
     int nx=i/NLnoise/NLnoise ,ny=(i%(NLnoise*NLnoise))/NLnoise, nz=i%NLnoise;
     
@@ -208,7 +196,6 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   }
 
   // derivative zeta
-  // std::vector<double> dzetar(NLnoise/2,0);
   for (size_t ri=1; ri<NLnoise/2-1; ri++) {
     dzetar[ri] = (zetar[1][ri+1] - zetar[1][ri-1])/(2.*dr);
   }
