@@ -142,7 +142,7 @@ void evolution(int seed) {
         double phiamp = sqrt(calPphi(phi));
       #endif
 
-      double dw = dwlist[0][i];
+      double dw = dwlist[0][i];//dist(engine);//
       if(i==0 && sweight) weightlist[n] = dw; // save weight data
 
       double Bias = biaslist[0][i];

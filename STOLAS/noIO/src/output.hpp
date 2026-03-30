@@ -4,34 +4,33 @@
 
 void OpenFiles(int NoisefiledirNo, int Interpolatingnumber){
   std::string NLfilename = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo);
-  std::string InterFileName = NLfilename + std::string("_") + std::to_string(Interpolatingnumber) + std::string(".dat");
+  std::string InterFileName = NLfilename + std::string("_") + std::to_string(Interpolatingnumber);
 
-  Nfile.open(Nfileprefix + InterFileName);
+  // Nfile.open(Nfileprefix + InterFileName + std::string(".dat"));
+  Nfile.open(Nfileprefix + InterFileName + std::string(".bin"), std::ios::binary);
   Nfile << std::setprecision(10);
   Nfilefail = Nfile.fail();
 
   if (sfield) {
-    fieldfile.open(fieldfileprefix + InterFileName);
+    fieldfile.open(fieldfileprefix + InterFileName + std::string(".dat"));
     fieldfile << std::setprecision(10);
   }
   
   if (strajectory) {
-    trajectoryfile.open(trajectoryfileprefix + InterFileName);
+    trajectoryfile.open(trajectoryfileprefix + InterFileName + std::string(".dat"));
     trajectoryfile << std::setprecision(10);
   }
 
   if (sweight) {
-    logwfile.open(logwfileprefix + InterFileName);
+    logwfile.open(logwfileprefix + InterFileName + std::string(".dat"));
   }
   
 }
 
 void save_zeta(){
-  for (int i=0; i<NLnoiseAll; i++){
-    double Nsave = 0.;
-    Nsave = Ndata[i];
-    Nfile << i << ' ' << Nsave << std::endl;
-  }
+  // for (int i=0; i<NLnoiseAll; i++) Nfile << i << ' ' << Ndata[i] << std::endl;
+
+  Nfile.write(reinterpret_cast<const char*>(&Ndata), sizeof(double) * NLnoiseAll);
 }
 
 void save_field(){

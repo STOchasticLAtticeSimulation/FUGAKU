@@ -158,9 +158,9 @@ const double B3 = B1; // Gradient of the potential at third stage
 const double V0 = 3.*H0*H0; // Amplitude of flat potential
 const double phif = -0.3; // The inflaton value at the end of inflation
 const double phiN = -0.12; // The inflaton value at the end of inflation
-const double PHI_INIT = 0.0511;
+const double PHI_INIT = 0.03;//0.0511;
 const double DPHI_INIT = -5.45e-7;
-const double calPzeta = 10.e-5;
+const double calPzeta = 30.e-5;
 const double USRrange = H0/(6.*M_PI*sqrt(calPzeta)) - B1/pw2(3.*H0);//-0.0181435;//-0.0180356;
 double divdN = 10.;
 

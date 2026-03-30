@@ -45,10 +45,11 @@ fftw_init_threads();
     if(EoI_noise) evolutionNoise(seed_val);
 
     dNmap(interpolatingnumber);
+    save_zeta(); // save delta N map
+    std::cout << std::endl << "Export delta N map" << std::endl;
 
-    save_zeta(); // svave delta N map
-    if(sfield) save_field();
     if(spower) spectrum(Ndata,interpolatingnumber);
+    if(sfield) save_field();
     if(sweight) weight();
     if(scompaction) compaction(Ndata,noisefiledirNo);
     Nfile.close();
