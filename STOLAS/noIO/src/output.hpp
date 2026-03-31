@@ -29,8 +29,8 @@ void OpenFiles(int NoisefiledirNo, int Interpolatingnumber){
 
 void save_zeta(){
   // for (int i=0; i<NLnoiseAll; i++) Nfile << i << ' ' << Ndata[i] << std::endl;
-
   Nfile.write(reinterpret_cast<const char*>(&Ndata), sizeof(double) * NLnoiseAll);
+  std::cout << "Export delta N map" << std::endl;
 }
 
 void save_field(){
@@ -111,14 +111,14 @@ void spectrum(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
 
 
 // calculation of weight
-void weight() {
+void weight(int seed) {
   double logw = 0.;
   for (size_t n=0; n<weightlist.size(); n++) {
     double N = n*dN;
     double Bias = bias/dNbias/sqrt(2*M_PI)*exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
     logw -= Bias*weightlist[n]*sqrt(dN) + (Bias*Bias*dN)/2;
   }
-  logwfile << noisefileNo << ' ' << logw << std::endl;
+  logwfile << seed << ' ' << logw << std::endl;
 }
 
 

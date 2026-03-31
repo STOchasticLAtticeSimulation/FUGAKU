@@ -23,10 +23,9 @@ fftw_init_threads();
   fftw_plan_with_nthreads(omp_get_max_threads());
 #endif
 
-  int noisefiledirNo = atoi(argv[1]);
   int seed_val = atoi(argv[1]);
 
-  std::cout << "Noise seed No. : " << noisefiledirNo << std::endl;
+  std::cout << "Noise seed No. " << seed_val << std::endl;
   std::cout << "model : " << model << std::endl;
 
   // initialize fields
@@ -34,7 +33,7 @@ fftw_init_threads();
 
   // Solve fields
   for (size_t interpolatingnumber = 0; interpolatingnumber < internumber+1; interpolatingnumber++) {
-    OpenFiles(noisefiledirNo, interpolatingnumber);
+    OpenFiles(seed_val, interpolatingnumber);
     
     if (checkNfilefail()) {
       std::cout << "The export file couldn't be opened. 'mkdir data'" << std::endl;
@@ -42,16 +41,33 @@ fftw_init_threads();
     }
 
     evolution(seed_val);
-    if(EoI_noise) evolutionNoise(seed_val);
 
-    dNmap(interpolatingnumber);
+    if(EoI_noise && MeanNumber!=0) {
+      PhidataAv = phievol;
+      for (int av = 0; av < MeanNumber; av++) {
+        evolutionNoise(seed_val,av); // Adding the noise until EoN()
+        dNmap(interpolatingnumber);
+        Ntotal += Ndata;
+        Ndata.fill(0.0); // reset vector
+        phievol = PhidataAv;
+        std::cout << "\rAveraging   : " << std::setw(1) << int(100.*av/(double)MeanNumber) << "%" << std::flush;
+      }
+      std::cout << std::endl;
+      for (int i=0; i<NLnoiseAll; i++) Ndata[i] = Ntotal[i]/(double)MeanNumber;
+    }
+    else if(EoI_noise && MeanNumber==0) {
+      evolutionNoise(seed_val,0); // Adding the noise until EoN()
+      dNmap(interpolatingnumber);
+    }
+    else {
+      dNmap(interpolatingnumber);
+    }
+
     save_zeta(); // save delta N map
-    std::cout << std::endl << "Export delta N map" << std::endl;
-
     if(spower) spectrum(Ndata,interpolatingnumber);
     if(sfield) save_field();
-    if(sweight) weight();
-    if(scompaction) compaction(Ndata,noisefiledirNo);
+    if(sweight) weight(seed_val);
+    if(scompaction) compaction(Ndata,seed_val);
     Nfile.close();
     fieldfile.close();
 

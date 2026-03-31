@@ -57,18 +57,19 @@ const std::string cmpfileprefix = sdatadir + "/" + model + "/compaction_";
 const std::string prbfileprefix = sdatadir + "/" + model + "/probabilities";
 const std::string logwfileprefix = sdatadir + "/" + model + "/logw_";
 
-bool noisefilefail, biasfilefail, Nfilefail, superH = false;
+bool Nfilefail, superH = false;
 
-int Nn, noisefiledirNo, noisefileNo;
+// int noisefiledirNo, noisefileNo;
 std::ofstream Nfile, fieldfile, fieldfileA, trajectoryfile, powfile, powsfile, cmpfile, prbfile, logwfile;
 std::array<double,NLnoiseAll> Ndata{};
+std::array<double,NLnoiseAll> Nnoise{};
+std::array<double,NLnoiseAll> Ntotal{};
+// std::array<double,NLnoiseAll> Naverage{};
 
 std::array<state_type,NLnoiseAll> phievol{};
+std::array<state_type,NLnoiseAll> PhidataAv{};
 // std::array<state_type,NLnoiseAll> Phidata{};
-// std::array<state_type,NLnoiseAll> PhidataAv{};
 
-std::array<double,NLnoiseAll> Nnoise{};
-// std::array<double,NLnoiseAll> Ntotal{};
 
 std::array<std::array<double,NLnoiseAll>,NFIELDS+1> biaslist{};
 std::array<std::array<double,NLnoiseAll>,NFIELDS+1> dwlist{};
@@ -120,8 +121,13 @@ void evolution(int seed) {
   std::mt19937 engine(seed);
 
   for (size_t n=0; n<totalstep; n++){
-    dwlist_gen(n*dN,engine);
     biaslist1D(n*dN);
+
+    #if MODEL==3
+      NFLOOP dwlist_gen(n*dN,engine,nf-1);
+    #else
+      dwlist_gen(n*dN,engine,0);
+    #endif
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -158,8 +164,15 @@ void evolution(int seed) {
         stepper_noise.do_step(dphidN, phi, N, dN);
       #endif
 
-      phi[0] += phiamp * dw * sqrt_dN;
-      phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
+      #if MODEL==3
+        NFLOOP{
+          phi[2*nf] += phiamp * sqrt_dN * dwlist[nf-1][i];
+        }
+      #else
+        phi[0] += phiamp * dw * sqrt_dN;
+        phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
+      #endif
+
       phievol[i] = phi;
 
       #if MODEL==1
@@ -202,20 +215,21 @@ void evolution(int seed) {
     }
 
     N += dN;
-    std::cout << "\rLatticeSimulation   : " << std::setw(1) << int(100.*n/(double)totalstep) << "%" << std::flush;
+    std::cout << "\rLatticeSimulation   : " << std::setw(1) << int(100.*(n+1)/(double)totalstep) << "%" << std::flush;
   }
+  std::cout << std::endl;
 }
 
 
-void evolutionNoise(int seed) {
+void evolutionNoise(int seed, int averagetime) {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
   for (int i=0; i<NLnoiseAll; i++) {
     double N = 0;
-    
-    std::mt19937 engine(seed + i); // generate random noise for each thread
-    std::normal_distribution<> dist(0., 1.);
+    std::seed_seq seq{seed,averagetime,i};
+    std::mt19937 engine_av(seq);
+    std::normal_distribution<> dist_av(0., 1.);
 
     state_type phi = phievol[i];
 
@@ -228,7 +242,7 @@ void evolutionNoise(int seed) {
         stepper_noise.do_step(dphidN, phi, N, dN);
         N += dN;
         NFLOOP{
-          double dw = dist(engine);
+          double dw = dist_av(engine_av);
           phi[2*nf] += psiamp * dw * sqrt_dN;
         }
       #elif MODEL==2

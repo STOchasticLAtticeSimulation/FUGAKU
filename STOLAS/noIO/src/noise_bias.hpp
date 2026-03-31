@@ -30,12 +30,14 @@ bool complexpoint(int nx, int ny, int nz, int Num) {
     (nxt==Num/2 && 1<=nyt && nyt!=Num/2 && nzt==0) || (1<=nxt && nxt!=Num/2 && nyt==0 && nzt==Num/2) || (nxt==0 && nyt==Num/2 && 1<=nzt && nzt!=Num/2);
 }
 
-void dwlist_gen(double N, std::mt19937& engine) {
+void dwlist_gen(double N, std::mt19937& engine, int Nfield) {
   int count = 0;
   double nsigma = sigma*exp(N);
 
   fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
   fftw_complex* out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
+  fftw_plan plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+
   for (int i = 0; i < NLnoiseAll; i++) {
     in[i][0] = 0.0;
     in[i][1] = 0.0;
@@ -86,11 +88,10 @@ void dwlist_gen(double N, std::mt19937& engine) {
     in[i][1] /= sqrt(count);
   }
 
-  fftw_plan plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
   fftw_execute(plan);
 
   for (int i = 0; i < NLnoiseAll; i++) {
-    dwlist[0][i] = out[i][0];
+    dwlist[Nfield][i] = out[i][0];
   }
 
   fftw_destroy_plan(plan);
@@ -104,6 +105,8 @@ void biaslist1D(double N) {
   
   fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
   fftw_complex* out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
+  fftw_plan plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+
   for (int i = 0; i < NLnoiseAll; i++) {
     in[i][0] = 0.0;
     in[i][1] = 0.0;
@@ -130,7 +133,6 @@ void biaslist1D(double N) {
     in[i][0] /= count;
   }
 
-  fftw_plan plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
   fftw_execute(plan);
 
   for (int i = 0; i < NLnoiseAll; i++) {
