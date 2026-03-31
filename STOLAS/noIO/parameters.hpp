@@ -2,7 +2,7 @@
 #define INCLUDED_parameters_hpp_
 
 // Parameters of STOLAS
-const double sigma = 0.1; // pow(2.,-4.); //ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
+const double sigma = pow(2.,-3.); //0.1; // //ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
 constexpr double dn = 1; // Thickness of nsigma sphere shell
 constexpr int NLnoise = 64; // Box size L
 constexpr int totalnoiseNo = 1;//pow(2,3); // The number of chunks
@@ -15,7 +15,7 @@ double nsigmareset = 8.;
 constexpr int aninum = 20; // dividing number for animation
 constexpr bool EoI_noise = false; // Adding the noise until EoN
 constexpr int MeanNumber = 1; // Number of averageing in each
-constexpr int internumber = 5; // Number of zoom-in
+constexpr int internumber = 0; // Number of zoom-in
 
 // Outputs
 constexpr bool sfield = false; // Output field

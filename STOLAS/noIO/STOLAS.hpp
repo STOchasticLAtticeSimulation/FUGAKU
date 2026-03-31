@@ -116,8 +116,8 @@ void initialize(){
 
 void evolution(int seed, std::mt19937& engine, int starttime, int endtime) {
   double N = starttime*dN;
-  int animationcount = 0; // for animation
-  int animationstep = 0;
+  int animationcount = (starttime==firststep ? firststep%aninum : 0); // for animation
+  int animationstep = (starttime==firststep ? firststep/((double)aninum) : 0);
 
   for (size_t n=starttime; n<endtime; n++){
     biaslist1D(n*dN);

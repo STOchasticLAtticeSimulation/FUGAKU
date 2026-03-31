@@ -58,19 +58,28 @@ void save_trajectory(state_type PHI, double Ntime){
 
 void animation(std::array<state_type,NLnoiseAll>& phievol, int NoisefiledirNo, int Ntime){
   std::string fFileName = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo) + std::string("_") + std::to_string(Ntime);
-  fieldfileA.open(animationfileprefix + fFileName + std::string(".dat"));
+  // fieldfileA.open(animationfileprefix + fFileName + std::string(".dat"));
+  fieldfileA.open(animationfileprefix + fFileName + std::string(".bin"), std::ios::binary);
   fieldfileA << std::setprecision(10);
 
-  for (int i=0; i<NLnoiseAll; i++){
-    fieldfileA << phievol[i][1] << ' ' << hubble(phievol[i]) << std::endl;
+  static std::array<double, 2 * NLnoiseAll> buffer;
 
-    #if MODEL==3
-      double PSISUM = 0;
-      NFLOOP PSISUM += pw2(phievol[i][2*nf]);
-      fieldfileA << sqrt(PSISUM) << std::endl;
-
-    #endif
+  for (int i=0; i<NLnoiseAll; i++) {
+      buffer[2*i] = phievol[i][1];
+      buffer[2*i + 1] = hubble(phievol[i]);
   }
+  fieldfileA.write(reinterpret_cast<const char*>(buffer.data()), sizeof(double) * buffer.size());
+
+  // for (int i=0; i<NLnoiseAll; i++){
+  //   fieldfileA << phievol[i][1] << ' ' << hubble(phievol[i]) << std::endl;
+
+  //   #if MODEL==3
+  //     double PSISUM = 0;
+  //     NFLOOP PSISUM += pw2(phievol[i][2*nf]);
+  //     fieldfileA << sqrt(PSISUM) << std::endl;
+
+  //   #endif
+  // }
   fieldfileA.close();
 }
 
