@@ -6,7 +6,7 @@ extern inline double pw3(double x) {return x*x*x;}
 extern inline double pw4(double x) {return x*x*x*x;}
 
 
-#define MODEL 1 // 0 -> chaotic, 1 -> Starobinsky, 2 -> USR, 3 -> hybrid
+#define MODEL 2 // 0 -> chaotic, 1 -> Starobinsky, 2 -> USR, 3 -> hybrid
 #define NFIELDS 0 // Number of waterfall
 
 #define NFLOOP for (int nf = 1; nf < NFIELDS+1; nf++)

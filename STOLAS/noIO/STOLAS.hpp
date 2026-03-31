@@ -62,13 +62,13 @@ bool Nfilefail, superH = false;
 // int noisefiledirNo, noisefileNo;
 std::ofstream Nfile, fieldfile, fieldfileA, trajectoryfile, powfile, powsfile, cmpfile, prbfile, logwfile;
 std::array<double,NLnoiseAll> Ndata{};
-std::array<double,NLnoiseAll> Nnoise{};
-std::array<double,NLnoiseAll> Ntotal{};
+std::array<double,NLnoiseAll> Nnoise{}; // use for EoN noise
+std::array<double,NLnoiseAll> Ntotal{}; // use for averaging
 // std::array<double,NLnoiseAll> Naverage{};
 
 std::array<state_type,NLnoiseAll> phievol{};
-std::array<state_type,NLnoiseAll> PhidataAv{};
-// std::array<state_type,NLnoiseAll> Phidata{};
+std::array<state_type,NLnoiseAll> PhidataAv{}; // use for averaging
+std::array<state_type,NLnoiseAll> Phidata{}; // use for zoom
 
 
 std::array<std::array<double,NLnoiseAll>,NFIELDS+1> biaslist{};
@@ -114,13 +114,12 @@ void initialize(){
 }
 
 
-void evolution(int seed) {
-  double N = 0;
+void evolution(int seed, std::mt19937& engine, int starttime, int endtime) {
+  double N = starttime*dN;
   int animationcount = 0; // for animation
   int animationstep = 0;
-  std::mt19937 engine(seed);
 
-  for (size_t n=0; n<totalstep; n++){
+  for (size_t n=starttime; n<endtime; n++){
     biaslist1D(n*dN);
 
     #if MODEL==3
@@ -215,7 +214,7 @@ void evolution(int seed) {
     }
 
     N += dN;
-    std::cout << "\rLatticeSimulation   : " << std::setw(1) << int(100.*(n+1)/(double)totalstep) << "%" << std::flush;
+    std::cout << "\rLatticeSimulation   : " << std::setw(1) << int(100.*(n+1)/(double)(endtime)) << "%" << std::flush;
   }
   std::cout << std::endl;
 }
@@ -253,7 +252,7 @@ void evolutionNoise(int seed, int averagetime) {
         stepper_noise.do_step(dphidN, phi, N, dN);
         N += dN;
         
-        double dw = dist(engine);
+        double dw = dist(engine_av);
         phi[0] += phiamp * dw * sqrt_dN;
       #elif MODEL==1
         double phiamp = sqrt(calPphi(N,phi,N0list[i],brokenlist[i]));
@@ -265,7 +264,7 @@ void evolutionNoise(int seed, int averagetime) {
         stepper_noise.do_step(dphidN, phi, N, dN);
         N += dN;
         
-        double dw = dist(engine);
+        double dw = dist(engine_av);
         phi[0] += phiamp * dw * sqrt_dN;
       #endif
 

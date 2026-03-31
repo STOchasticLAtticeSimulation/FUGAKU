@@ -24,6 +24,7 @@ fftw_init_threads();
 #endif
 
   int seed_val = atoi(argv[1]);
+  std::mt19937 engine(seed_val);
 
   std::cout << "Noise seed No. " << seed_val << std::endl;
   std::cout << "model : " << model << std::endl;
@@ -40,7 +41,11 @@ fftw_init_threads();
       return -1;
     }
 
-    evolution(seed_val);
+    if(interpolatingnumber==0) evolution(seed_val,engine,0,firststep);
+    else  evolution(seed_val,engine,firststep-itpstep,firststep);
+    
+    Phidata = phievol; // save field values for zoom
+    evolution(seed_val,engine,firststep,totalstep);
 
     if(EoI_noise && MeanNumber!=0) {
       PhidataAv = phievol;
@@ -72,16 +77,16 @@ fftw_init_threads();
     fieldfile.close();
 
 
-    // // Interpolation
-    // if (interpolatingnumber!=internumber) {
-    //   std::vector<int> shift{0,0,0}; // std::vector<int> shift = findNMaxBox(Ndata);
+    // Interpolation
+    if (interpolatingnumber!=internumber) {
+      std::vector<int> shift{0,0,0}; // std::vector<int> shift = findNMaxBox(Ndata);
 
-    //   phievol = Phidata; // reset field values
-    //   Ntotal.fill(0.0); // reset vector
-    //   InterpolatingPhi(shift);
+      // phievol = Phidata; // reset field values
+      Ntotal.fill(0.0); // reset vector
+      InterpolatingPhi(shift);
 
-    //   std::cout << "Number of interpolation: " << interpolatingnumber+1 << std::endl;
-    // }
+      std::cout << "Number of interpolation: " << interpolatingnumber+1 << std::endl;
+    }
   }
 
   // ---------- stop timer ----------

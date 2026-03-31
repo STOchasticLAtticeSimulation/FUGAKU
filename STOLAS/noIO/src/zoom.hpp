@@ -99,7 +99,7 @@ void InterpolatingPhi(std::vector<int> Shift){
       for (int z = 0; z < NLhalf; z++) {
         int idx = index(x+Shift[0],y+Shift[1],z+Shift[2]);
         for (int nf = 0; nf < 2*NFIELDS+2; nf++) {
-          LatticeField[nf][x][y][z] = phievol[idx][nf];
+          LatticeField[nf][x][y][z] = Phidata[idx][nf];
         }
       }
     }
