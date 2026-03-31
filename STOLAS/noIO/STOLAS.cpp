@@ -73,6 +73,9 @@ fftw_init_threads();
     if(sfield) save_field();
     if(sweight) weight(seed_val);
     if(scompaction) compaction(Ndata,seed_val);
+    #if MODEL==2
+      save_N1N2(seed_val);
+    #endif
     Nfile.close();
     fieldfile.close();
 

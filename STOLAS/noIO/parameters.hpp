@@ -2,7 +2,7 @@
 #define INCLUDED_parameters_hpp_
 
 // Parameters of STOLAS
-const double sigma = pow(2.,-3.); //0.1; // //ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
+const double sigma = pow(2.,-4.); //0.1; // //ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
 constexpr double dn = 1; // Thickness of nsigma sphere shell
 constexpr int NLnoise = 64; // Box size L
 constexpr int totalnoiseNo = 1;//pow(2,3); // The number of chunks

@@ -33,7 +33,8 @@ mkdir -p "$data"
 mkdir -p "$data/$model"
 mkdir -p "$data/$model/animation"
 
-for ((i=0; i<1; i++))
+ll=0
+for ((i=ll; i<ll+1; i++))
 do
 	./STOLAS $i
 done
