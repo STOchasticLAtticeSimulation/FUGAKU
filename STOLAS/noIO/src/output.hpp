@@ -27,6 +27,7 @@ void OpenFiles(int NoisefiledirNo, int Interpolatingnumber){
   
 }
 
+#if MODEL==2
 void save_N1N2(int NoisefiledirNo){
   std::ofstream N1N2fileA;
   std::string fFileName = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo) + std::string("_") + std::to_string(0);
@@ -42,6 +43,7 @@ void save_N1N2(int NoisefiledirNo){
   std::cout << "Export N1 and N2" << std::endl;
   N1N2fileA.close();
 }
+#endif
 
 void save_zeta(){
   // for (int i=0; i<NLnoiseAll; i++) Nfile << i << ' ' << Ndata[i] << std::endl;

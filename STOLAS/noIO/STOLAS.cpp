@@ -55,7 +55,7 @@ fftw_init_threads();
         Ntotal += Ndata;
         Ndata.fill(0.0); // reset vector
         phievol = PhidataAv;
-        std::cout << "\rAveraging   : " << std::setw(1) << int(100.*av/(double)MeanNumber) << "%" << std::flush;
+        std::cout << "\rAveraging           : " << std::setw(1) << int(100.*(av+1)/(double)MeanNumber) << "%" << std::flush;
       }
       std::cout << std::endl;
       for (int i=0; i<NLnoiseAll; i++) Ndata[i] = Ntotal[i]/(double)MeanNumber;
