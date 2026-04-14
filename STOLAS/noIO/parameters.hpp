@@ -22,13 +22,13 @@ constexpr bool sfield = false; // Output field
 constexpr bool strajectory = false; // Output the trajectory
 constexpr bool spower = true; // Output the power spectrum
 constexpr bool sanimation = false; // Output the animation
-constexpr bool sweight = false; // Output the weight
-constexpr bool scompaction = false; // Output the compaction
+constexpr bool sweight = true; // Output the weight
+constexpr bool scompaction = true; // Output the compaction
 
 // Importance sampling
-constexpr double Nbias = 16.; // Time of the bias
+constexpr double Nbias = 5.55; //3.8;// Time of the bias
 constexpr double dNbias = 0.1; // Variance of the bias
-const double bias = 0*sqrt(dNbias); // Amplitude of the bias
+const double bias = 22.*sqrt(dNbias); // Amplitude of the bias
 
 // Directory name of saved data, you can change after "make clean" in your terminal.
 const std::string sdatadir = "data";

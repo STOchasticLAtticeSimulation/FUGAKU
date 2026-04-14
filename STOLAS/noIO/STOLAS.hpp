@@ -77,6 +77,7 @@ std::array<std::array<double,NLnoiseAll>,NFIELDS+1> dwlist{};
 // output
 std::array<double,imax> disc_power{};
 std::array<double,100*NLnoise> weightlist{};
+std::array<double,100*NLnoise> weightbool{};
 std::array<std::array<double,NLnoise/2>,2> zetar{};
 std::array<double,NLnoise/2> dzetar{};
 
@@ -148,7 +149,11 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime) {
       #endif
 
       double dw = dwlist[0][i];//dist(engine);//
-      if(i==0 && sweight) weightlist[n] = dw; // save weight data
+      if(i==0 && sweight){
+         weightlist[n] = dw; // save weight data
+         weightbool[n] = true;
+      }
+      // if(i==0 && sweight) std::cout << std::endl << n << ' ' << weightlist[n] << std::endl;
 
       double Bias = biaslist[0][i];
       double GaussianFactor = 1./dNbias/sqrt(2*M_PI) * exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);

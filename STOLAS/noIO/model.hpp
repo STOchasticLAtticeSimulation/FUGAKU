@@ -75,7 +75,7 @@ const double Ap = sqrt(9./4/M_PI/M_PI*H0*H0*H0*H0*H0*H0/calPRIR); // Gradient of
 const double Am = Ap/Lambda; // Gradient of the potential at second stage
 const double V0 = 3*H0*H0; // Amplitude of flat potential
 const double phif = -0.0187; // The inflaton value at the end of inflation
-const double PHI_INIT = 0.0835;
+const double PHI_INIT = 0.0835;//0.0193;//
 const double DPHI_INIT = -5.45e-7;
 
 // Potential

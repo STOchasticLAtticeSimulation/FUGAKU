@@ -143,7 +143,7 @@ void weight(int seed) {
   for (size_t n=0; n<weightlist.size(); n++) {
     double N = n*dN;
     double Bias = bias/dNbias/sqrt(2*M_PI)*exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
-    logw -= Bias*weightlist[n]*sqrt(dN) + (Bias*Bias*dN)/2;
+    if(weightbool[n]) logw -= Bias*weightlist[n]*sqrt(dN) + (Bias*Bias*dN)/2;
   }
   logwfile << seed << ' ' << logw << std::endl;
 }
@@ -157,7 +157,7 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   cmpfile << std::setprecision(10);
   
   double Naverage = 0;
-  int dr = 1;
+  double dr = 1;
   for (size_t n = 0; n < Ndata.size(); n++) {
     Naverage += Ndata[n];
   }
@@ -170,8 +170,8 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
 
   // Find max value
   int maxNpoint = std::distance(Ndata.begin(), std::max_element(Ndata.begin(), Ndata.end()));
-  // int xmax = maxNpoint/NLnoise/NLnoise, ymax = (maxNpoint%(NLnoise*NLnoise))/NLnoise, zmax = maxNpoint%NLnoise;
-  int xmax = 0, ymax = 0, zmax = 0;
+  int xmax = maxNpoint/NLnoise/NLnoise, ymax = (maxNpoint%(NLnoise*NLnoise))/NLnoise, zmax = maxNpoint%NLnoise;
+  // int xmax = 0, ymax = 0, zmax = 0;
 
   // radial profile
   for (size_t i=0; i<NLnoise*NLnoise*NLnoise; i++) {
@@ -226,7 +226,15 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   }
   CompactionInt /= pow(Rmax, 3)/3.;
 
-  prbfile << noisefiledirNo //<< ' ' << logw 
+  // compute weight
+  double logw = 0.;
+  for (size_t n=0; n<weightlist.size(); n++) {
+    double Nt = n*dN;
+    double Bias = bias/dNbias/sqrt(2*M_PI)*exp(-(Nt-Nbias)*(Nt-Nbias)/2./dNbias/dNbias);
+    if(weightbool[n]) logw -= Bias*weightlist[n]*sqrt_dN + (Bias*Bias*dN)/2;
+  }
+
+  prbfile << noisefiledirNo << ' ' << logw 
   << ' ' << CompactionInt << ' ' << CompactionMax << ' ' << Rmax << ' ' << rmax << std::endl;
   std::cout << "ExportCompactionFunction" << std::endl;
 }
