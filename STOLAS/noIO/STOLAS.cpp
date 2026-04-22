@@ -82,11 +82,21 @@ fftw_init_threads();
 
     // Interpolation
     if (interpolatingnumber!=internumber) {
-      std::vector<int> shift{0,0,0}; // std::vector<int> shift = findNMaxBox(Ndata);
+      std::vector<int> shift{0,0,0};
+      // std::vector<int> shift{NLnoise/4,NLnoise/4,NLnoise/4}; // std::vector<int> shift = findNMaxBox(Ndata);
 
-      // phievol = Phidata; // reset field values
+      // phievol = Phidata; // reset field values //not use
       Ntotal.fill(0.0); // reset vector
       InterpolatingPhi(shift);
+
+      for (int i=0; i<NLnoiseAll; i++){
+        #if MODEL==1
+          if(phievol[i][0]>0) brokenlist[i] = false;
+        #elif MODEL==2
+          if (phievol[i][0] > phi1) broken1list[i] = false;
+          if (phievol[i][0] > phi2) broken2list[i] = false;
+        #endif
+      }
 
       std::cout << "Number of interpolation: " << interpolatingnumber+1 << std::endl;
     }

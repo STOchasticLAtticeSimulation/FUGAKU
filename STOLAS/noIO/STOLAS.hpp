@@ -230,7 +230,8 @@ void evolutionNoise(int seed, int averagetime) {
 #pragma omp parallel for
 #endif
   for (int i=0; i<NLnoiseAll; i++) {
-    double N = 0;
+    // double N = 0;
+    double N = totalstep*dN;
     std::seed_seq seq{seed,averagetime,i};
     std::mt19937 engine_av(seq);
     std::normal_distribution<> dist_av(0., 1.);
@@ -254,7 +255,13 @@ void evolutionNoise(int seed, int averagetime) {
         double piamp = sqrt(calPpi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]));
         double crosscor = RecalPphipi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]);
         
-        stepper_noise.do_step(dphidN, phi, N, dN);
+        // stepper_noise.do_step(dphidN, phi, N, dN);
+        // N += dN;
+        double Nstep = N;
+        for (int dn=0;dn<(int)divdN;dn++) {
+          stepper_noise.do_step(dphidN, phi, Nstep, dN/divdN);
+          Nstep += dN/divdN;
+        }
         N += dN;
         
         double dw = dist(engine_av);
@@ -279,7 +286,7 @@ void evolutionNoise(int seed, int averagetime) {
     }
 
     phievol[i] = phi;
-    Nnoise[i] = N;
+    Nnoise[i] = N - dN*totalstep;
   }
 }
 
