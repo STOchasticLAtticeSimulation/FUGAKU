@@ -1,6 +1,25 @@
 #ifndef INCLUDED_noise_bias_hpp_
 #define INCLUDED_noise_bias_hpp_
 
+inline fftw_complex *in, *out;
+inline fftw_plan plan;
+
+inline void init_fftw_global() {
+  static bool is_initialized = false;
+  if (!is_initialized) {
+    fftw_init_threads();
+    #ifdef _OPENMP
+      fftw_plan_with_nthreads(omp_get_max_threads());
+    #endif
+
+    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoiseAll);
+    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoiseAll);
+
+    plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+
+    is_initialized = true;
+  }
+}
 
 // judge if point is in nsigma sphere shell
 bool innsigma(int nx, int ny, int nz, int Num, double nsigma, double dn) {
@@ -33,10 +52,6 @@ bool complexpoint(int nx, int ny, int nz, int Num) {
 void dwlist_gen(double N, std::mt19937& engine, int Nfield) {
   int count = 0;
   double nsigma = sigma*exp(N);
-
-  fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
-  fftw_complex* out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
-  fftw_plan plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
   for (int i = 0; i < NLnoiseAll; i++) {
     in[i][0] = 0.0;
@@ -78,8 +93,6 @@ void dwlist_gen(double N, std::mt19937& engine, int Nfield) {
     for (int i = 0; i < NLnoiseAll; i++) {
       dwlist[0][i] = out[i][0];
     }
-    fftw_free(in);
-    fftw_free(out);
     return;
   }
 
@@ -93,19 +106,11 @@ void dwlist_gen(double N, std::mt19937& engine, int Nfield) {
   for (int i = 0; i < NLnoiseAll; i++) {
     dwlist[Nfield][i] = out[i][0];
   }
-
-  fftw_destroy_plan(plan);
-  fftw_free(in);
-  fftw_free(out);
 }
 
 void biaslist1D(double N) {
   int count = 0;
   double nsigma = sigma*exp(N);
-  
-  fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
-  fftw_complex* out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoise * NLnoise * NLnoise);
-  fftw_plan plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 
   for (int i = 0; i < NLnoiseAll; i++) {
     in[i][0] = 0.0;
@@ -125,10 +130,9 @@ void biaslist1D(double N) {
     for (int i = 0; i < NLnoiseAll; i++) {
       biaslist[0][i] = out[i][0];
     }
-    fftw_free(in);
-    fftw_free(out);
     return;
   }
+
   for (int i = 0; i < NLnoiseAll; i++) {
     in[i][0] /= count;
   }
@@ -138,10 +142,6 @@ void biaslist1D(double N) {
   for (int i = 0; i < NLnoiseAll; i++) {
     biaslist[0][i] = out[i][0];
   }
-
-  fftw_destroy_plan(plan);
-  fftw_free(in);
-  fftw_free(out);
 }
 
 

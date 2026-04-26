@@ -17,12 +17,11 @@ int main(int argc, char* argv[])
   before = (double)Nv.tv_sec + (double)Nv.tv_usec * 1.e-6;
   // ---------------------------------
 
-fftw_init_threads();
 #ifdef _OPENMP
   std::cout << "OpenMP : Enabled (Max # of threads = " << omp_get_max_threads() << ")" << std::endl;
-  fftw_plan_with_nthreads(omp_get_max_threads());
 #endif
 
+  init_fftw_global();
   int seed_val = atoi(argv[1]);
   std::mt19937 engine(seed_val);
 
