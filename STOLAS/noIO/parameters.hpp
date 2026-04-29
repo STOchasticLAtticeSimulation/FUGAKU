@@ -15,7 +15,7 @@ double nsigmareset = 16.;
 constexpr int aninum = 20; // dividing number for animation
 constexpr bool EoI_noise = false; // Adding the noise until EoN
 constexpr int MeanNumber = 0; // Number of averageing in each
-constexpr int internumber = 15; // Number of zoom-in
+constexpr int internumber = 8; // Number of zoom-in
 
 // Outputs
 constexpr bool sfield = false; // Output field

@@ -23,7 +23,8 @@ int main(int argc, char* argv[])
 
   init_fftw_global();
   int seed_val = atoi(argv[1]);
-  std::mt19937 engine(seed_val);
+  std::mt19937 engine(0);//engine(seed_val);//
+  std::mt19937 engine_int(seed_val);
 
   std::cout << "Noise seed No. " << seed_val << std::endl;
   std::cout << "model : " << model << std::endl;
@@ -40,13 +41,13 @@ int main(int argc, char* argv[])
       return -1;
     }
 
-    if(interpolatingnumber==0) evolution(seed_val,engine,0,firststep);
-    else  evolution(seed_val,engine,firststep-itpstep,firststep);
+    if(interpolatingnumber==0) evolution(seed_val,engine,0,firststep,interpolatingnumber);
+    else  evolution(seed_val,engine,firststep-itpstep,firststep,interpolatingnumber);
     
     Phidata = phievol; // save field values for zoom
-    evolution(seed_val,engine,firststep,totalstep);
+    evolution(seed_val,engine,firststep,totalstep,interpolatingnumber);
 
-    if(EoI_noise && MeanNumber!=0) {
+    if(EoI_noise && MeanNumber!=0 && interpolatingnumber==internumber) {
       PhidataAv = phievol;
       for (int av = 0; av < MeanNumber; av++) {
         evolutionNoise(seed_val,av); // Adding the noise until EoN()
@@ -59,7 +60,7 @@ int main(int argc, char* argv[])
       std::cout << std::endl;
       for (int i=0; i<NLnoiseAll; i++) Ndata[i] = Ntotal[i]/(double)MeanNumber;
     }
-    else if(EoI_noise && MeanNumber==0) {
+    else if(EoI_noise && MeanNumber==0 && interpolatingnumber==internumber) {
       evolutionNoise(seed_val,0); // Adding the noise until EoN()
       dNmap(interpolatingnumber);
     }
@@ -81,10 +82,12 @@ int main(int argc, char* argv[])
 
     // Interpolation
     if (interpolatingnumber!=internumber) {
-      std::vector<int> shift{0,0,0};
-      // std::vector<int> shift{NLnoise/4,NLnoise/4,NLnoise/4}; // std::vector<int> shift = findNMaxBox(Ndata);
-
-      // phievol = Phidata; // reset field values //not use
+      int shiftx = (int)(NLnoise*0.25*(1.0+std::erf(dist(engine_int)*inv_sqrt2)));// NLnoise/4; //
+      int shifty = (int)(NLnoise*0.25*(1.0+std::erf(dist(engine_int)*inv_sqrt2)));
+      int shiftz = (int)(NLnoise*0.25*(1.0+std::erf(dist(engine_int)*inv_sqrt2)));
+      shift = {shiftx,shifty,shiftz};
+      std::cout << shiftx << ' ' << shifty << ' ' << shiftz << std::endl;
+      // findNMaxBox(Ndata);
       Ntotal.fill(0.0); // reset vector
       InterpolatingPhi(shift);
 

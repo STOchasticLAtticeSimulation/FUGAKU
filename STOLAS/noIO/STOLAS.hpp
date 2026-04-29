@@ -39,6 +39,7 @@ constexpr double dx = LL/NLnoise; // Spacing of each lattice
 constexpr int NLpower = log2_int(NLnoise);
 constexpr double imax_double = LOG2*(NLpower-1) / dlogn;
 constexpr int imax = int(imax_double) + (imax_double > int(imax_double));
+const double inv_sqrt2 = 1./sqrt(2.);
 
 
 #include "model.hpp"
@@ -115,8 +116,8 @@ void initialize(){
 }
 
 
-void evolution(int seed, std::mt19937& engine, int starttime, int endtime) {
-  double N = starttime*dN;
+void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int InterpolatingNo) {
+  double N = (starttime + InterpolatingNo*itpstep)*dN;
   int animationcount = (starttime==firststep ? firststep%aninum : 0); // for animation
   int animationstep = (starttime==firststep ? firststep/((double)aninum) : 0);
 
@@ -153,7 +154,6 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime) {
          weightlist[n] = dw; // save weight data
          weightbool[n] = true;
       }
-      // if(i==0 && sweight) std::cout << std::endl << n << ' ' << weightlist[n] << std::endl;
 
       double Bias = biaslist[0][i];
       double GaussianFactor = 1./dNbias/sqrt(2*M_PI) * exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);

@@ -1,6 +1,8 @@
 #ifndef INCLUDED_zoom_hpp_
 #define INCLUDED_zoom_hpp_
 
+std::array<int,3> shift{};
+
 inline int indexsmall(int i, int j, int k) {
   return i * NLnoise * NLnoise/4 + j * NLnoise/2 + k;
 }
@@ -67,8 +69,9 @@ int findMaxZeta(){
 }
 
 
-std::vector<int> findNMaxBox(std::vector<double> NData){
-  int maxNpoint = std::distance(NData.begin(), std::max_element(NData.begin(), NData.end()));
+// std::vector<int> 
+void findNMaxBox(std::array<double,NLnoiseAll>& Ndata){
+  int maxNpoint = std::distance(Ndata.begin(), std::max_element(Ndata.begin(), Ndata.end()));
 
   int x = maxNpoint/NLnoise/NLnoise, y = (maxNpoint%(NLnoise*NLnoise))/NLnoise, z = maxNpoint%NLnoise;
   int xb = x - NLnoise/4, yb = y - NLnoise/4, zb = z - NLnoise/4;
@@ -80,13 +83,13 @@ std::vector<int> findNMaxBox(std::vector<double> NData){
   if(z > NLnoise/2) zb = NLnoise/2;
   if(zb<0) zb = 0;
 
-  std::vector<int> ShiftVector{xb,yb,zb};
-
-  return ShiftVector;
+  shift={xb,yb,zb};
 }
 
 
-void InterpolatingPhi(std::vector<int> Shift){
+// std::vector<std::vector<std::vector<std::vector<double>>>> LatticeField(2*NFIELDS+2,std::vector<std::vector<std::vector<double>>>(NLnoise/2,std::vector<std::vector<double>>(NLnoise/2,std::vector<double>(NLnoise/2,0.))));
+
+void InterpolatingPhi(std::array<int,3> shift){
   int NLhalf = NLnoise/2;
 
   std::vector<std::vector<std::vector<std::vector<double>>>> LatticeField(2*NFIELDS+2,std::vector<std::vector<std::vector<double>>>(NLhalf,std::vector<std::vector<double>>(NLhalf,std::vector<double>(NLhalf,0.))));
@@ -97,7 +100,7 @@ void InterpolatingPhi(std::vector<int> Shift){
   for (int x = 0; x < NLhalf; x++) {
     for (int y = 0; y < NLhalf; y++) {
       for (int z = 0; z < NLhalf; z++) {
-        int idx = index(x+Shift[0],y+Shift[1],z+Shift[2]);
+        int idx = index(x+shift[0],y+shift[1],z+shift[2]);
         for (int nf = 0; nf < 2*NFIELDS+2; nf++) {
           LatticeField[nf][x][y][z] = Phidata[idx][nf];
         }

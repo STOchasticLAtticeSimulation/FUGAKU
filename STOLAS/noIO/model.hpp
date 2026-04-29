@@ -106,22 +106,27 @@ double calPphi(double &N, const state_type &phi, double N0, bool broken) {
     return pow(hubble(phi)/2./M_PI,2);
   } else {
     double alpha = exp(N-N0);
+    double alp2 = alpha*alpha;
+    double sig2 = sigma*sigma;
+    double alp3 = alpha*alpha*alpha;
+    double sig3 = sigma*sigma*sigma;
+
     return pow(hubble(phi)/2./M_PI,2) *
-      ((1 + pow(sigma,2))*(9*pow(1 + pow(alpha,2)*pow(sigma,2),2) - 
-				18*Lambda*pow(1 + pow(alpha,2)*pow(sigma,2),2) + 
-				pow(Lambda,2)*(9 + 18*pow(alpha,2)*pow(sigma,2) + 9*pow(alpha,4)*pow(sigma,4) + 
-					       2*pow(alpha,6)*pow(sigma,6))) + 
-	    3*(-3*(1 + (-1 + 4*alpha)*pow(sigma,2) - (-4 + alpha)*pow(alpha,3)*pow(sigma,4) + 
-		   pow(alpha,4)*pow(sigma,6)) + Lambda*
-	       (6 + 6*(-1 + 4*alpha)*pow(sigma,2) + 2*(14 - 5*alpha)*pow(alpha,3)*pow(sigma,4) + 
-		2*(5 - 2*alpha)*pow(alpha,4)*pow(sigma,6)) + 
-	       pow(Lambda,2)*(-3 + (3 - 12*alpha)*pow(sigma,2) + pow(alpha,3)*(-16 + 7*alpha)*pow(sigma,4) + 
-			      pow(alpha,4)*(-7 + 4*alpha)*pow(sigma,6)))*cos(2*(-1 + alpha)*sigma) + 
-	    6*sigma*(-3*pow(-1 + Lambda,2) + pow(alpha,4)*(3 - 10*Lambda + 7*pow(Lambda,2))*pow(sigma,4) - 
-		     3*alpha*pow(-1 + Lambda,2)*(-1 + pow(sigma,2)) - 
-		     pow(alpha,3)*(3 - 7*Lambda + 4*pow(Lambda,2))*pow(sigma,2)*(-1 + pow(sigma,2)) + 
-		     pow(alpha,5)*(-1 + Lambda)*Lambda*pow(sigma,4)*(-1 + pow(sigma,2)))*sin(2*sigma - 2*alpha*sigma))/
-      (2.*pow(alpha,6)*pow(Lambda,2)*pow(sigma,6));
+      ((1 + sig2)*(9*pow(1 + alp2*sig2,2) - 
+				18*Lambda*pow(1 + alp2*sig2,2) + 
+				pow(Lambda,2)*(9 + 18*alp2*sig2 + 9*alp2*alp2*sig2*sig2 + 
+					       2*alp3*alp3*sig3*sig3)) + 
+	    3*(-3*(1 + (-1 + 4*alpha)*sig2 - (-4 + alpha)*alp3*sig2*sig2 + 
+		   alp2*alp2*sig3*sig3) + Lambda*
+	       (6 + 6*(-1 + 4*alpha)*sig2 + 2*(14 - 5*alpha)*alp3*sig2*sig2 + 
+		2*(5 - 2*alpha)*alp2*alp2*sig3*sig3) + 
+	       pow(Lambda,2)*(-3 + (3 - 12*alpha)*sig2 + alp3*(-16 + 7*alpha)*sig2*sig2 + 
+			      alp2*alp2*(-7 + 4*alpha)*sig3*sig3))*cos(2*(-1 + alpha)*sigma) + 
+	    6*sigma*(-3*pow(-1 + Lambda,2) + alp2*alp2*(3 - 10*Lambda + 7*pow(Lambda,2))*sig2*sig2 - 
+		     3*alpha*pow(-1 + Lambda,2)*(-1 + sig2) - 
+		     alp3*(3 - 7*Lambda + 4*pow(Lambda,2))*sig2*(-1 + sig2) + 
+		     alp2*alp3*(-1 + Lambda)*Lambda*sig2*sig2*(-1 + sig2))*sin(2*sigma - 2*alpha*sigma))/
+      (2.*alp3*alp3*pow(Lambda,2)*sig3*sig3);
   }
 }
 
@@ -156,9 +161,9 @@ const double B1 = sqrt(9./4/M_PI/M_PI*H0*H0*H0*H0*H0*H0/calPRIR); // Gradient of
 const double B2 = 0; // Gradient of the potential at second stage
 const double B3 = B1; // Gradient of the potential at third stage
 const double V0 = 3.*H0*H0; // Amplitude of flat potential
-const double phif = -0.9; // -0.3; // The inflaton value at the end of inflation
-const double phiN = phif+0.05; // The inflaton value at the end of inflation
-const double PHI_INIT = 0.0826;//0.0511;
+const double phif = -0.5; // -0.3; // The inflaton value at the end of inflation
+const double phiN = phif+0.02; // The inflaton value at the end of inflation
+const double PHI_INIT = 0.0826;//0.00511;//
 const double DPHI_INIT = -5.45e-7;
 const double calPzeta = 22.8e-5;
 const double USRrange = H0/(6.*M_PI*sqrt(calPzeta)) - B1/pw2(3.*H0);//-0.0181435;//-0.0180356;
@@ -203,32 +208,39 @@ double hubble(const state_type &phi) {
 double calPphi(double &N, const state_type &phi, double N1, double N2, bool broken1, bool broken2) {
   double alpha = exp(N-N1);
   double beta = exp(N-N2);
+  double alp2 = alpha*alpha;
+  double bet2 = beta*beta;
+  double sig2 = sigma*sigma;
+  double alp3 = alpha*alpha*alpha;
+  double bet3 = beta*beta*beta;
+  double sig3 = sigma*sigma*sigma;
+
   if (!broken1&&!broken2) {
-    return (pow(M_PI,-2)*(1 + pow(sigma,2))*pow(hubble(phi),2))/4.;
+    return pw2(hubble(phi)/M_PI)*(1 + sig2)/4.;
   }
   else if(broken1&&!broken2) {
-    return (pow(M_PI,-2)*pow(alpha,-6)*pow(B1,-2)*pow(hubble(phi),2)*pow(sigma,-6)*(3*(B1 - B2)*cos(2*(-1 + alpha)*sigma)*
-        (3*B2*(1 + (-1 + 4*alpha)*pow(sigma,2) - (-4 + alpha)*pow(alpha,3)*pow(sigma,4) + pow(alpha,4)*pow(sigma,6)) + 
-          B1*(-3 + (3 - 12*alpha)*pow(sigma,2) + (-16 + 7*alpha)*pow(alpha,3)*pow(sigma,4) + (-7 + 4*alpha)*pow(alpha,4)*pow(sigma,6))) + 
-       (1 + pow(sigma,2))*(pow(B1,2)*(9 + 18*pow(alpha,2)*pow(sigma,2) + 9*pow(alpha,4)*pow(sigma,4) + 2*pow(alpha,6)*pow(sigma,6)) - 
-          18*B1*B2*pow(1 + pow(alpha,2)*pow(sigma,2),2) + 9*pow(B2 + B2*pow(alpha,2)*pow(sigma,2),2)) - 
-       6*(B1 - B2)*sigma*(-3*(-1 + alpha)*B2*(1 + alpha*pow(sigma,2) + pow(alpha,2)*pow(sigma,2) + pow(alpha,3)*pow(sigma,4)) + 
-          B1*(-3 - 3*alpha*(-1 + pow(sigma,2)) - 4*pow(alpha,3)*(-1 + pow(sigma,2))*pow(sigma,2) + 7*pow(alpha,4)*pow(sigma,4) + 
-             pow(alpha,5)*(-1 + pow(sigma,2))*pow(sigma,4)))*sin(2*(-1. + alpha)*sigma)))/8.;
+    return (pw2(hubble(phi)/(M_PI*alp3*B1*sig3))*(3*(B1 - B2)*cos(2*(-1 + alpha)*sigma)*
+        (3*B2*(1 + (-1 + 4*alpha)*sig2 - (-4 + alpha)*alp3*sig2*sig2 + alp2*alp2*sig3*sig3) + 
+          B1*(-3 + (3 - 12*alpha)*sig2 + (-16 + 7*alpha)*alp3*sig2*sig2 + (-7 + 4*alpha)*alp2*alp2*sig3*sig3)) + 
+       (1 + sig2)*(pw2(B1)*(9 + 18*alp2*sig2 + 9*alp2*alp2*sig2*sig2 + 2*alp3*alp3*sig3*sig3) - 
+          18*B1*B2*(1 + alp2*sig2)*(1 + alp2*sig2) + 9*(B2 + B2*alp2*sig2)*(B2 + B2*alp2*sig2)) - 
+       6*(B1 - B2)*sigma*(-3*(-1 + alpha)*B2*(1 + alpha*sig2 + alp2*sig2 + alp3*sig2*sig2) + 
+          B1*(-3 - 3*alpha*(-1 + sig2) - 4*alp3*(-1 + sig2)*sig2 + 7*alp2*alp2*sig2*sig2 + 
+             alp2*alp3*(-1 + sig2)*sig2*sig2))*sin(2*(-1. + alpha)*sigma)))/8.;
   }
   else {
-    return (pow(M_PI,-2)*pow(alpha,-6)*pow(B1,-2)*pow(beta,-6)*pow(sigma,-12)*
+    return (1./(M_PI*alp3*B1*bet3*sig3*sig3*M_PI*alp3*B1*bet3*sig3*sig3)*
      pow(std::abs(hubble(phi)*(-((1. - II*sigma)*exp(2.*II*sigma)*
-             ((3*(B2 + B2*pow(alpha,2)*pow(sigma,2)) + B1*(-3 - 3*pow(alpha,2)*pow(sigma,2) - 2.*II*pow(alpha,3)*pow(sigma,3)))*
-                (-3*B3*pow(alpha,3)*(1 + pow(beta,2)*pow(sigma,2)) + 2.*II*B1*pow(beta,6)*pow(sigma,3) - 2.*II*B2*pow(beta,6)*pow(sigma,3) + 
-                  B2*pow(alpha,3)*(3 + 3*pow(beta,2)*pow(sigma,2) + 2.*II*pow(beta,3)*pow(sigma,3))) + 
-               9*(B1 - B2)*(B2 - B3)*pow(alpha,3)*exp(2.*II*(alpha - beta)*sigma)*pow(II + alpha*sigma,2)*pow(-II + beta*sigma,2))) + 
+             ((3*(B2 + B2*alp2*sig2) + B1*(-3 - 3*alp2*sig2 - 2.*II*alp3*sig3))*
+                (-3*B3*alp3*(1 + bet2*sig2) + 2.*II*B1*bet3*bet3*sig3 - 2.*II*B2*bet3*bet3*sig3 + 
+                  B2*alp3*(3 + 3*bet2*sig2 + 2.*II*bet3*sig3)) + 
+               9*(B1 - B2)*(B2 - B3)*alp3*exp(2.*II*(alpha - beta)*sigma)*(II + alpha*sigma)*(II + alpha*sigma)*(-II + beta*sigma)*(-II + beta*sigma))) + 
           3.*II*(1. + II*sigma)*exp(2.*II*beta*sigma)*
-           ((B1 - B2)*exp(2.*II*(alpha - beta)*sigma)*(-3.*II*B3*pow(alpha,3)*(1 + pow(beta,2)*pow(sigma,2)) + 2*B1*pow(beta,6)*pow(sigma,3) - 
-                2*B2*pow(beta,6)*pow(sigma,3) + B2*pow(alpha,3)*(3.*II + 3.*II*pow(beta,2)*pow(sigma,2) + 2*pow(beta,3)*pow(sigma,3)))*
-              pow(II + alpha*sigma,2) + (B2 - B3)*pow(alpha,3)*
-              (3.*II*(-B1 + B2) + 3.*II*(-B1 + B2)*pow(alpha,2)*pow(sigma,2) + 2*B1*pow(alpha,3)*pow(sigma,3))*pow(II + beta*sigma,2)))*
-        pow(B2*pow(alpha,3) + B1*pow(beta,3) - B2*pow(beta,3),-1)),2))/64.;
+           ((B1 - B2)*exp(2.*II*(alpha - beta)*sigma)*(-3.*II*B3*alp3*(1 + bet2*sig2) + 2*B1*bet3*bet3*sig3 - 
+                2*B2*bet3*bet3*sig3 + B2*alp3*(3.*II + 3.*II*bet2*sig2 + 2*bet3*sig3))*
+              (II + alpha*sigma)*(II + alpha*sigma) + (B2 - B3)*alp3*
+              (3.*II*(-B1 + B2) + 3.*II*(-B1 + B2)*alp2*sig2 + 2*B1*alp3*sig3)*(II + beta*sigma)*(II + beta*sigma)))*
+        1./(B2*alp3 + B1*bet3 - B2*bet3)),2))/64.;
   }
 }
 
