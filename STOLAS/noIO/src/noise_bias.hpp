@@ -15,7 +15,7 @@ inline void init_fftw_global() {
     in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoiseAll);
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoiseAll);
 
-    plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_MEASURE);
 
     is_initialized = true;
   }
