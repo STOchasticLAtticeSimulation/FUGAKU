@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 
   init_fftw_global();
   int seed_val = atoi(argv[1]);
-  std::mt19937 engine(0);//engine(seed_val);//
+  std::mt19937 engine(seed_val);//engine(0);//
   std::mt19937 engine_int(seed_val);
 
   std::cout << "Noise seed No. " << seed_val << std::endl;
@@ -41,8 +41,12 @@ int main(int argc, char* argv[])
       return -1;
     }
 
-    if(interpolatingnumber==0) evolution(seed_val,engine,0,firststep,interpolatingnumber);
-    else  evolution(seed_val,engine,firststep-itpstep,firststep,interpolatingnumber);
+    if(interpolatingnumber==0) {
+      evolution(seed_val,engine,0,firststep,interpolatingnumber);
+    }
+    else {
+      evolution(seed_val,engine,firststep-itpstep,firststep,interpolatingnumber);
+    }
     
     Phidata = phievol; // save field values for zoom
     evolution(seed_val,engine,firststep,totalstep,interpolatingnumber);
@@ -65,6 +69,7 @@ int main(int argc, char* argv[])
       dNmap(interpolatingnumber);
     }
     else {
+      std::cout << "start dNmap" << std::endl;
       dNmap(interpolatingnumber);
     }
 

@@ -73,7 +73,7 @@ std::array<state_type,NLnoiseAll> Phidata{}; // use for zoom
 
 
 std::array<std::array<double,NLnoiseAll>,NFIELDS+1> biaslist{};
-std::array<std::array<double,NLnoiseAll>,NFIELDS+1> dwlist{};
+std::array<std::array<double,NLnoiseAll>,NFIELDS+1+1> dwlist{};
 
 // output
 std::array<double,imax> disc_power{};
@@ -127,7 +127,8 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int I
     #if MODEL==3
       NFLOOP dwlist_gen(n*dN,engine,nf-1);
     #else
-      dwlist_gen(n*dN,engine,0);
+      dwlist_gen(n*dN,engine,0); // for phi
+      dwlist_gen(n*dN,engine,1); // for pi
     #endif
 
 #ifdef _OPENMP
@@ -142,9 +143,10 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int I
         double piamp = sqrt(calPpi(N,phi,N0list[i],brokenlist[i]));
         double crosscor = RecalPphipi(N,phi,N0list[i],brokenlist[i]);
       #elif MODEL==2
-        double phiamp = sqrt(calPphi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]));
-        double piamp = sqrt(calPpi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]));
-        double crosscor = RecalPphipi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]);
+        double calPphival = calPphi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]);
+        double calPpival = calPpi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]);
+        double crosscor = RecalPphipi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]);///piamp/phiamp;
+        double phiamp = sqrt(calPphival);
       #else
         double phiamp = sqrt(calPphi(phi));
       #endif
@@ -173,8 +175,32 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int I
           phi[2*nf] += phiamp * sqrt_dN * dwlist[nf-1][i];
         }
       #else
-        phi[0] += phiamp * dw * sqrt_dN;
+        double dwpi = dwlist[1][i];
+
+        double b2 = crosscor*crosscor;
+        double combi1 = sqrt(4.*b2 + pw2(calPphival-calPpival));
+
+        double sqrtlam1 = sqrt(0.5*(calPphival+calPpival + combi1));
+        double eig2 = 0.5*(calPphival+calPpival - combi1);
+        if(eig2 < 1e-14*(calPphival+calPpival)) eig2 = 0.;
+
+        double sqrtlam2 = sqrt(eig2);
+
+        double denomplus = sqrt(4.*b2 + pw2(calPphival-calPpival + combi1));
+        double denomminus = sqrt(4.*b2 + pw2(calPphival-calPpival - combi1));
+
+        double vplus1 = (calPphival-calPpival + combi1)/denomplus;
+        double vplus2 = 2.*crosscor/denomplus;
+        double vminus1 = (calPphival-calPpival - combi1)/denomminus;
+        double vminus2 = 2.*crosscor/denomminus;
+
+        phi[0] += (sqrtlam1*vplus1*dw + sqrtlam2*vminus1*dwpi) * sqrt_dN;
+        phi[1] += (sqrtlam1*vplus2*dw + sqrtlam2*vminus2*dwpi) * sqrt_dN;
+
+
+        // phi[0] += phiamp * dw * sqrt_dN;
         phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
+
       #endif
 
       phievol[i] = phi;
@@ -230,7 +256,6 @@ void evolutionNoise(int seed, int averagetime) {
 #pragma omp parallel for
 #endif
   for (int i=0; i<NLnoiseAll; i++) {
-    // double N = 0;
     double N = totalstep*dN;
     std::seed_seq seq{seed,averagetime,i};
     std::mt19937 engine_av(seq);
@@ -253,10 +278,8 @@ void evolutionNoise(int seed, int averagetime) {
       #elif MODEL==2
         double phiamp = sqrt(calPphi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]));
         double piamp = sqrt(calPpi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]));
-        double crosscor = RecalPphipi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]);
+        double crosscor = RecalPphipi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i])/phiamp/piamp;
         
-        // stepper_noise.do_step(dphidN, phi, N, dN);
-        // N += dN;
         double Nstep = N;
         for (int dn=0;dn<(int)divdN;dn++) {
           stepper_noise.do_step(dphidN, phi, Nstep, dN/divdN);
