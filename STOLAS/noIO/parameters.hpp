@@ -24,6 +24,7 @@ constexpr bool spower = true; // Output the power spectrum
 constexpr bool sanimation = false; // Output the animation
 constexpr bool sweight = false; // Output the weight
 constexpr bool scompaction = false; // Output the compaction
+constexpr bool snoisemap = false; // Output the noisemap
 
 // Importance sampling
 constexpr double Nbias = 5.55; //3.8;// Time of the bias

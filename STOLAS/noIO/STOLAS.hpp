@@ -61,7 +61,7 @@ const std::string logwfileprefix = sdatadir + "/" + model + "/logw_";
 bool Nfilefail, superH = false;
 
 // int noisefiledirNo, noisefileNo;
-std::ofstream Nfile, fieldfile, fieldfileA, trajectoryfile, powfile, powsfile, cmpfile, prbfile, logwfile;
+std::ofstream Nfile, fieldfile, fieldfileA, trajectoryfile, powfile, powsfile, cmpfile, prbfile, logwfile, Noisefile;
 std::array<double,NLnoiseAll> Ndata{};
 std::array<double,NLnoiseAll> Nnoise{}; // use for EoN noise
 std::array<double,NLnoiseAll> Ntotal{}; // use for averaging
@@ -130,6 +130,15 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int I
       dwlist_gen(n*dN,engine,0); // for phi
       dwlist_gen(n*dN,engine,1); // for pi
     #endif
+
+    if(snoisemap){
+      if(n==totalstep-200) {
+        Noisefile.open(sdatadir + "/" + model + "/noisedata/map_" + std::to_string(n) + std::string(".bin"), std::ios::binary);
+        Noisefile << std::setprecision(10);
+        Noisefile.write(reinterpret_cast<const char*>(&dwlist[0]), sizeof(double) * NLnoiseAll);
+        Noisefile.close();
+      }
+    }
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -334,10 +343,19 @@ void dNmap(int InterpolatingNo) {
     state_type phir{};
     state_type phim{};
 
+    int countstep = 0;
+    int caouttrj=0;
     while (true){
       stepper.do_step(dphidN);
       phi = stepper.current_state();
       N = stepper.current_time();
+
+      caouttrj++;
+      if(strajectory && i==0 && caouttrj>1000){
+        double Nd = N;
+        save_trajectory(phi, Nd);
+        caouttrj=0;
+      }
       
       if (EoI(phi)<0){
         double precphi = 1.e+2;
@@ -360,6 +378,11 @@ void dNmap(int InterpolatingNo) {
         }
 
         N = Nmid;
+        break;
+      }
+      countstep++;
+      if (countstep>1e3) {
+        std::cout << i << " N = " << N << std::endl;
         break;
       }
 

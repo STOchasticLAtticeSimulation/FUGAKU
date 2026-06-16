@@ -24,6 +24,11 @@ void OpenFiles(int NoisefiledirNo, int Interpolatingnumber){
   if (sweight) {
     logwfile.open(logwfileprefix + InterFileName + std::string(".dat"));
   }
+
+  if (snoisemap) {
+    Noisefile.open(sdatadir + "/" + model + "/noisedata/map_" + InterFileName + std::string(".bin"), std::ios::binary);
+    Noisefile << std::setprecision(10);
+  }
   
 }
 
