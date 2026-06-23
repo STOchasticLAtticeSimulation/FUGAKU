@@ -65,7 +65,6 @@ std::ofstream Nfile, fieldfile, fieldfileA, trajectoryfile, powfile, powsfile, c
 std::array<double,NLnoiseAll> Ndata{};
 std::array<double,NLnoiseAll> Nnoise{}; // use for EoN noise
 std::array<double,NLnoiseAll> Ntotal{}; // use for averaging
-// std::array<double,NLnoiseAll> Naverage{};
 
 std::array<state_type,NLnoiseAll> phievol{};
 std::array<state_type,NLnoiseAll> PhidataAv{}; // use for averaging
