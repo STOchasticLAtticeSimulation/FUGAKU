@@ -107,18 +107,12 @@ void dwlist_gen(double N, std::mt19937& engine, int Nfield) {
     }
 
   if (count==0) {
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = 0; i < NLnoiseAll; i++) {
       dwlist[0][i] = out[i][0];
     }
     return;
   }
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
   for (int i = 0; i < NLnoiseAll; i++) {
     in[i][0] /= sqrt(count);
     in[i][1] /= sqrt(count);
@@ -126,9 +120,6 @@ void dwlist_gen(double N, std::mt19937& engine, int Nfield) {
 
   fftw_execute(plan);
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
   for (int i = 0; i < NLnoiseAll; i++) {
     dwlist[Nfield][i] = out[i][0];
   }
@@ -139,9 +130,6 @@ void biaslist1D(double N) {
   int count = 0;
   double nsigma = sigma*exp(N);
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
   for (int i = 0; i < NLnoiseAll; i++) {
     in[i][0] = 0.0;
     in[i][1] = 0.0;
@@ -160,27 +148,18 @@ void biaslist1D(double N) {
   }
 
   if (count==0) {
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = 0; i < NLnoiseAll; i++) {
       biaslist[0][i] = out[i][0];
     }
     return;
   }
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
   for (int i = 0; i < NLnoiseAll; i++) {
     in[i][0] /= count;
   }
 
   fftw_execute(plan);
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
   for (int i = 0; i < NLnoiseAll; i++) {
     biaslist[0][i] = out[i][0];
   }
