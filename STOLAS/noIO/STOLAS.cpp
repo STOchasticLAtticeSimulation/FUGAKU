@@ -93,6 +93,41 @@ int main(int argc, char* argv[])
        if (Ndata[i] > Nmax) Ndata[i] = Nmax;
     }
 
+// #ifdef _OPENMP
+// #pragma omp parallel for
+// #endif
+//     LOOP {
+//       int idx = index(i, j, k);
+//       if (Ndata[idx] > 20.){
+//         int ip1 = INCREMENT(i);
+//         int im1 = DECREMENT(i);
+//         int jp1 = INCREMENT(j);
+//         int jm1 = DECREMENT(j);
+//         int kp1 = INCREMENT(k);
+//         int km1 = DECREMENT(k);
+
+//         int neighbors[6] = {
+//           index(ip1, j, k), index(im1, j, k),
+//           index(i, jp1, k), index(i, jm1, k),
+//           index(i, j, kp1), index(i, j, km1)
+//         };
+
+//         double sum = 0.0;
+//         int count = 0;
+
+//         for (int n = 0; n < 6; n++) {
+//           if (Ndata[neighbors[n]] <= 20.) {
+//             sum += Ndata[neighbors[n]];
+//             count++;
+//           }
+//         }
+
+//         if (count > 0) {
+//           Ndata[idx] = sum / (double)count;
+//         }
+//       }
+//     }
+
     save_zeta(); // save delta N map
     if(spower) spectrum(Ndata,interpolatingnumber);
     if(sfield) save_field();
