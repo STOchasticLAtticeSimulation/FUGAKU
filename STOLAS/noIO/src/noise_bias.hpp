@@ -9,17 +9,42 @@ inline void init_fftw_global() {
   if (!is_initialized) {
     fftw_init_threads();
     #ifdef _OPENMP
-      fftw_plan_with_nthreads(omp_get_max_threads());
+      fftw_plan_with_nthreads(2);
     #endif
 
     in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoiseAll);
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoiseAll);
-
-    plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_MEASURE);
+    
+    if(splan && FFTWwisdom){
+      plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_PATIENT);
+      fftw_export_wisdom_to_filename((sdatadir+"/wisdom"+std::to_string(NLnoise)+".dat").c_str());
+    } else if (FFTWwisdom){
+      fftw_import_wisdom_from_filename((sdatadir+"/wisdom"+std::to_string(NLnoise)+".dat").c_str());
+      plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_WISDOM_ONLY);
+    } else{
+      plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_MEASURE);
+    }
 
     is_initialized = true;
   }
 }
+
+// inline void init_fftw_global() {
+//   static bool is_initialized = false;
+//   if (!is_initialized) {
+//     fftw_init_threads();
+//     #ifdef _OPENMP
+//       fftw_plan_with_nthreads(omp_get_max_threads());
+//     #endif
+
+//     in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoiseAll);
+//     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoiseAll);
+
+//     plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_MEASURE);
+
+//     is_initialized = true;
+//   }
+// }
 
 // judge if point is in nsigma sphere shell
 inline bool innsigma(int nx, int ny, int nz, int Num, double nsigma, double dn) {
@@ -107,12 +132,18 @@ void dwlist_gen(double N, std::mt19937& engine, int Nfield) {
     }
 
   if (count==0) {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for (int i = 0; i < NLnoiseAll; i++) {
       dwlist[0][i] = out[i][0];
     }
     return;
   }
 
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i = 0; i < NLnoiseAll; i++) {
     in[i][0] /= sqrt(count);
     in[i][1] /= sqrt(count);
@@ -120,6 +151,9 @@ void dwlist_gen(double N, std::mt19937& engine, int Nfield) {
 
   fftw_execute(plan);
 
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i = 0; i < NLnoiseAll; i++) {
     dwlist[Nfield][i] = out[i][0];
   }
@@ -148,18 +182,27 @@ void biaslist1D(double N) {
   }
 
   if (count==0) {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for (int i = 0; i < NLnoiseAll; i++) {
       biaslist[0][i] = out[i][0];
     }
     return;
   }
 
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i = 0; i < NLnoiseAll; i++) {
     in[i][0] /= count;
   }
 
   fftw_execute(plan);
 
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
   for (int i = 0; i < NLnoiseAll; i++) {
     biaslist[0][i] = out[i][0];
   }

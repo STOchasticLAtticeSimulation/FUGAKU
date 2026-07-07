@@ -18,6 +18,10 @@ constexpr bool EoI_noise = false; // Adding the noise until EoN
 constexpr int MeanNumber = 0; // Number of averageing in each
 constexpr int internumber = 0; // Number of zoom-in
 
+// FFTW setup
+constexpr bool splan = false;
+constexpr bool FFTWwisdom = false;
+
 // Outputs
 constexpr bool sfield = false; // Output field
 constexpr bool strajectory = false; // Output the trajectory
