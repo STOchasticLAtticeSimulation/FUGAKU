@@ -157,14 +157,14 @@ const std::string model = "USR"; // Name of the model
 const double H0 = 1e-5; // Hubble parameter of broken point
 const double calPRIR = 8.5e-10; // Amplitude of curvature perturbation
 const double B1 = sqrt(9./4/M_PI/M_PI*H0*H0*H0*H0*H0*H0/calPRIR); // Gradient of the potential at first stage
-const double B2 = B1/5000;//0; // Gradient of the potential at second stage
+const double B2 = B1/5000;// 0; // Gradient of the potential at second stage
 const double B3 = B1; // Gradient of the potential at third stage
 const double V0 = 3.*H0*H0; // Amplitude of flat potential
-const double phif = -0.3; // -0.3; // The inflaton value at the end of inflation
+const double phif = -0.3; // The inflaton value at the end of inflation
 const double phiN = phif+0.05; // The inflaton value at the end of inflation
 const double PHI_INIT = 0.0826;
 const double DPHI_INIT = -5.45e-7;
-const double calPzeta = 22.8e-5;//22.8e-5;
+const double calPzeta = 40.e-5;//22.8e-5;
 const double USRrange = H0/(6.*M_PI*sqrt(calPzeta)) - B1/pw2(3.*H0);//-0.0181435;//-0.0180356;
 double divdN = 100.;
 

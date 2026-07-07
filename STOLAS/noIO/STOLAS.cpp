@@ -73,6 +73,26 @@ int main(int argc, char* argv[])
       dNmap(interpolatingnumber);
     }
 
+    // omit eternal inflation
+    double Naverage = 0;
+    double Ntyp = 50.;
+    for (int i = 0; i < NLnoiseAll; i++) {
+      if (Ndata[i] < Ntyp) Naverage += Ndata[i];
+    }
+    Naverage /= NLnoiseAll;
+
+    double Nvariance = 0;
+    for (int i = 0; i < NLnoiseAll; i++) {
+      if (Ndata[i] < Ntyp) Nvariance += pw2(Ndata[i] - Naverage);
+    }
+    Nvariance /= NLnoiseAll;
+    // std::cout << Naverage << ' ' << sqrt(Nvariance) << std::endl;
+
+    double Nmax = Naverage + 10.*sqrt(Nvariance);
+    for (int i = 0; i < NLnoiseAll; i++) {
+       if (Ndata[i] > Nmax) Ndata[i] = Nmax;
+    }
+
     save_zeta(); // save delta N map
     if(spower) spectrum(Ndata,interpolatingnumber);
     if(sfield) save_field();

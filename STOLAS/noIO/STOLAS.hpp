@@ -202,12 +202,14 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int I
         double vminus1 = (calPphival-calPpival - combi1)/denomminus;
         double vminus2 = 2.*crosscor/denomminus;
 
-        phi[0] += (sqrtlam1*vplus1*dw + sqrtlam2*vminus1*dwpi) * sqrt_dN;
-        phi[1] += (sqrtlam1*vplus2*dw + sqrtlam2*vminus2*dwpi) * sqrt_dN;
+        double biaseddw = dw + bias * Bias * GaussianFactor * sqrt_dN;
+
+        phi[0] += (sqrtlam1*vplus1*biaseddw + sqrtlam2*vminus1*dwpi) * sqrt_dN;
+        phi[1] += (sqrtlam1*vplus2*biaseddw + sqrtlam2*vminus2*dwpi) * sqrt_dN;
 
 
         // phi[0] += phiamp * dw * sqrt_dN;
-        phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
+        // phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
 
       #endif
 
