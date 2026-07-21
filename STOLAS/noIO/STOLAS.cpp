@@ -8,6 +8,11 @@ int main(int argc, char* argv[])
     return -1;
   }
   
+  if(NLnoise!=pow(2,NLpower)) {
+    std::cout << "NLnoise and NLpower is not the same." << std::endl;
+    return -1;
+  }
+  
   // ---------- start timer ----------
   struct timeval Nv;
   struct timezone Nz;
