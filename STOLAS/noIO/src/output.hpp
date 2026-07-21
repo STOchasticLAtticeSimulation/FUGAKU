@@ -6,8 +6,8 @@ void OpenFiles(int NoisefiledirNo, int Interpolatingnumber){
   std::string NLfilename = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo);
   std::string InterFileName = NLfilename + std::string("_") + std::to_string(Interpolatingnumber);
 
-  // Nfile.open(Nfileprefix + InterFileName + std::string(".dat"));
-  Nfile.open(Nfileprefix + InterFileName + std::string(".bin"), std::ios::binary);
+  std::string SigmaFileName = std::string("_") + std::to_string(int(sigma*100));
+  Nfile.open(Nfileprefix + InterFileName + SigmaFileName + std::string(".bin"), std::ios::binary);
   Nfile << std::setprecision(10);
   Nfilefail = Nfile.fail();
 
@@ -157,7 +157,7 @@ void weight(int seed) {
 // Calculate compaction function
 void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   prbfile.open(prbfileprefix + std::string(".dat"), std::ios::app);
-  cmpfile.open(cmpfileprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(noisefiledirNo) + std::string(".dat"));
+  cmpfile.open(cmpfileprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(noisefiledirNo) + std::to_string(int(100*sigma)) + std::string(".dat"));
   prbfile << std::setprecision(10);
   cmpfile << std::setprecision(10);
   
