@@ -9,7 +9,7 @@ inline void init_fftw_global() {
   if (!is_initialized) {
     fftw_init_threads();
     #ifdef _OPENMP
-      fftw_plan_with_nthreads(2);
+      fftw_plan_with_nthreads(omp_get_max_threads());
     #endif
 
     in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoiseAll);
@@ -29,22 +29,6 @@ inline void init_fftw_global() {
   }
 }
 
-// inline void init_fftw_global() {
-//   static bool is_initialized = false;
-//   if (!is_initialized) {
-//     fftw_init_threads();
-//     #ifdef _OPENMP
-//       fftw_plan_with_nthreads(omp_get_max_threads());
-//     #endif
-
-//     in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoiseAll);
-//     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * NLnoiseAll);
-
-//     plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_MEASURE);
-
-//     is_initialized = true;
-//   }
-// }
 
 // judge if point is in nsigma sphere shell
 inline bool innsigma(int nx, int ny, int nz, int Num, double nsigma, double dn) {
@@ -87,9 +71,6 @@ void dwlist_gen(double N, std::mt19937& engine, int Nfield) {
     in[i][1] = 0.0;
   }
 
-// #ifdef _OPENMP
-// #pragma omp parallel for collapse(3) reduction(+:count)
-// #endif
   for (int i = 0; i < NLnoise; i++) {
     for (int j = 0; j < NLnoise; j++) {
       for (int k = 0; k < NLnoise; k++) {
