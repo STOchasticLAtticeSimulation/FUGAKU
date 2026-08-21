@@ -7,7 +7,7 @@ int main(int argc, char* argv[])
     std::cout << "Specify the noise file number correctly." << std::endl;
     return -1;
   }
-  
+
   if(NLnoise!=pow(2,NLpower)) {
     std::cout << "NLnoise and NLpower is not the same." << std::endl;
     return -1;
@@ -78,61 +78,6 @@ int main(int argc, char* argv[])
       dNmap(interpolatingnumber);
     }
 
-    // omit eternal inflation
-    double Naverage = 0;
-    double Ntyp = 50.;
-    for (int i = 0; i < NLnoiseAll; i++) {
-      if (Ndata[i] < Ntyp) Naverage += Ndata[i];
-    }
-    Naverage /= NLnoiseAll;
-
-    double Nvariance = 0;
-    for (int i = 0; i < NLnoiseAll; i++) {
-      if (Ndata[i] < Ntyp) Nvariance += pw2(Ndata[i] - Naverage);
-    }
-    Nvariance /= NLnoiseAll;
-    // std::cout << Naverage << ' ' << sqrt(Nvariance) << std::endl;
-
-    double Nmax = Naverage + 10.*sqrt(Nvariance);
-    for (int i = 0; i < NLnoiseAll; i++) {
-       if (Ndata[i] > Nmax) Ndata[i] = Nmax;
-    }
-
-// #ifdef _OPENMP
-// #pragma omp parallel for
-// #endif
-//     LOOP {
-//       int idx = index(i, j, k);
-//       if (Ndata[idx] > 20.){
-//         int ip1 = INCREMENT(i);
-//         int im1 = DECREMENT(i);
-//         int jp1 = INCREMENT(j);
-//         int jm1 = DECREMENT(j);
-//         int kp1 = INCREMENT(k);
-//         int km1 = DECREMENT(k);
-
-//         int neighbors[6] = {
-//           index(ip1, j, k), index(im1, j, k),
-//           index(i, jp1, k), index(i, jm1, k),
-//           index(i, j, kp1), index(i, j, km1)
-//         };
-
-//         double sum = 0.0;
-//         int count = 0;
-
-//         for (int n = 0; n < 6; n++) {
-//           if (Ndata[neighbors[n]] <= 20.) {
-//             sum += Ndata[neighbors[n]];
-//             count++;
-//           }
-//         }
-
-//         if (count > 0) {
-//           Ndata[idx] = sum / (double)count;
-//         }
-//       }
-//     }
-
     save_zeta(); // save delta N map
     if(spower) spectrum(Ndata,interpolatingnumber);
     if(sfield) save_field();
@@ -140,6 +85,7 @@ int main(int argc, char* argv[])
     if(scompaction) compaction(Ndata,seed_val);
     #if MODEL==2
       save_N1N2(seed_val);
+      USRLength(seed_val);
     #endif
     Nfile.close();
     fieldfile.close();

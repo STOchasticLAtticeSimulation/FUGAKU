@@ -6,7 +6,9 @@ void OpenFiles(int NoisefiledirNo, int Interpolatingnumber){
   std::string NLfilename = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo);
   std::string InterFileName = NLfilename + std::string("_") + std::to_string(Interpolatingnumber);
 
-  std::string SigmaFileName = std::string("_") + std::to_string(int(sigma*100));
+  std::string SigmaFileName = std::string("_") + std::to_string(int(calPzeta0));
+
+  // Nfile.open(Nfileprefix + InterFileName + std::string(".dat"));
   Nfile.open(Nfileprefix + InterFileName + SigmaFileName + std::string(".bin"), std::ios::binary);
   Nfile << std::setprecision(10);
   Nfilefail = Nfile.fail();
@@ -46,6 +48,23 @@ void save_N1N2(int NoisefiledirNo){
   }  
   N1N2fileA << N1av/NLnoiseAll << ' ' << N2av/NLnoiseAll << std::endl;
   std::cout << "Export N1 and N2" << std::endl;
+  N1N2fileA.close();
+}
+
+void USRLength(int NoisefiledirNo){
+  std::ofstream N1N2fileA;
+  std::string fFileName = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo) + std::string("_") + std::to_string(0);
+  // N1N2fileA.open(sdatadir + "/" + model + "/N1N2Length_" + fFileName + std::string(".dat"));
+  N1N2fileA.open(sdatadir + "/" + model + "/N1N2Length_" + fFileName + std::string("_") + std::to_string(int(calPzeta0)) + std::string(".bin"), std::ios::binary);
+  N1N2fileA << std::setprecision(15);
+
+  static std::array<double, 2 * NLnoiseAll> buffer;
+  for (int i=0; i<NLnoiseAll; i++) {
+      buffer[2*i] = N1list[i];
+      buffer[2*i + 1] =  N2list[i];
+  }
+  N1N2fileA.write(reinterpret_cast<const char*>(buffer.data()), sizeof(double) * buffer.size());
+  std::cout << "Export N1 and N2 Length" << std::endl;
   N1N2fileA.close();
 }
 #endif

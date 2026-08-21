@@ -117,7 +117,7 @@ void dwlist_gen(double N, std::mt19937& engine, int Nfield) {
 #pragma omp parallel for
 #endif
     for (int i = 0; i < NLnoiseAll; i++) {
-      dwlist[0][i] = out[i][0];
+      dwlist[Nfield][i] = out[i][0];
     }
     return;
   }

@@ -1,13 +1,15 @@
 #ifndef INCLUDED_parameters_hpp_
 #define INCLUDED_parameters_hpp_
 
+// double sigma = std::stod(std::getenv("SIGMA"));
+
 // Parameters of STOLAS
-const double sigma = 0.6;//pow(2.,-3.); // //ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
+const double sigma = 0.5;// //ksigma = 2pi sigma exp(N) / L, nsigma = sigma exp(N)
 constexpr double dn = 1; // Thickness of nsigma sphere shell
-constexpr int NLnoise = 64; // Box size L
-constexpr int NLpower = 6;
+constexpr int NLnoise = 256; // Box size L
+constexpr int NLpower = 8;
 constexpr int totalnoiseNo = 1;//pow(2,3); // The number of chunks
-constexpr double dN = 0.01;//*M_LN2; // e-folds step
+constexpr double dN = 0.001;//*M_LN2; // e-folds step
 constexpr double Nprec = 1e-7; // Precision of e-foldings
 constexpr double dlogn = 0.1; // Width of bin in power spectrum
 constexpr double LL = 1.; // Box size L

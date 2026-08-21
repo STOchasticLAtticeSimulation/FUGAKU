@@ -152,6 +152,8 @@ inline double EoN(const state_type &phi) {
 
 #elif MODEL==2
 
+double calPzeta0 = std::stod(std::getenv("SIGMA"));
+
 // Model parameters
 const std::string model = "USR"; // Name of the model
 const double H0 = 1e-5; // Hubble parameter of broken point
@@ -164,9 +166,10 @@ const double phif = -0.3; // The inflaton value at the end of inflation
 const double phiN = phif+0.05; // The inflaton value at the end of inflation
 const double PHI_INIT = 0.0826;
 const double DPHI_INIT = -5.45e-7;
-const double calPzeta = 40.e-5;//22.8e-5;
+const double calPzeta = calPzeta0 * 1.e-5;//22.8e-5;//50.e-4;//
 const double USRrange = H0/(6.*M_PI*sqrt(calPzeta)) - B1/pw2(3.*H0);//-0.0181435;//-0.0180356;
-double divdN = 100.;
+double divdN = 10.;
+double Nprotect = 20.;
 
 const double phi1 = 0.;
 const double phi2 = phi1 + USRrange;
@@ -209,10 +212,12 @@ double calPphi(double &N, const state_type &phi, double N1, double N2, bool brok
   double beta = exp(N-N2);
   double alp2 = alpha*alpha;
   double bet2 = beta*beta;
-  double sig2 = sigma*sigma;
   double alp3 = alpha*alpha*alpha;
   double bet3 = beta*beta*beta;
-  double sig3 = sigma*sigma*sigma;
+
+  if (N - N1 > Nprotect) {
+    return pw2(hubble(phi)/M_PI)*(1. + sig2)/4.;
+  }
 
   if (!broken1&&!broken2) {
     return pw2(hubble(phi)/M_PI)*(1 + sig2)/4.;
@@ -243,17 +248,18 @@ double calPphi(double &N, const state_type &phi, double N1, double N2, bool brok
   }
 }
 
-
 // The power spectrum of pi
 double calPpi(double &N, const state_type &phi, double N1, double N2, bool broken1, bool broken2) {
   double alpha = exp(N-N1);
   double beta = exp(N-N2);
   double alp2 = alpha*alpha;
   double bet2 = beta*beta;
-  double sig2 = sigma*sigma;
   double alp3 = alpha*alpha*alpha;
   double bet3 = beta*beta*beta;
-  double sig3 = sigma*sigma*sigma;
+
+  if (N - N1 > Nprotect) {
+    return pw4(hubble(phi)*sigma)/pw2(2.*M_PI);
+  }
 
   if (!broken1&&!broken2) {
     return pw4(hubble(phi)*sigma)/pw2(2.*M_PI);
@@ -285,24 +291,26 @@ double RecalPphipi(double &N, const state_type &phi, double N1, double N2, bool 
   double beta = exp(N-N2);
   double alp2 = alpha*alpha;
   double bet2 = beta*beta;
-  double sig2 = sigma*sigma;
   double alp3 = alpha*alpha*alpha;
   double bet3 = beta*beta*beta;
-  double sig3 = sigma*sigma*sigma;
-  double prefactor = ((pw3(exp(N)*hubble(phi)*sigma))/(2.*M_PI*M_PI));
+  double prefactor = ((pw3(hubble(phi)*sigma))/(2.*M_PI*M_PI));
 
-   if (!broken1&&!broken2) {
-    return -prefactor*(exp(-3*N)/(2.*sigma));
+  if (N - N1 > Nprotect) {
+    return -prefactor*(1./(2.*sigma));
+  }
+  
+  if (!broken1&&!broken2) {
+    return -prefactor*(1./(2.*sigma));
   }
   else if(broken1&&!broken2) {
-    return -prefactor*0.25*(exp(-3*N)/pw2(alp3*B1*sig3)/sigma*(9*pw2(B1 - B2) + 18*alp2*pw2(B1 - B2)*sig2 + 9*alp2*alp2*pw2(B1 - B2)*sig2*sig2 + 
+    return -prefactor*0.25*(1/pw2(alp3*B1*sig3)/sigma*(9*pw2(B1 - B2) + 18*alp2*pw2(B1 - B2)*sig2 + 9*alp2*alp2*pw2(B1 - B2)*sig2*sig2 + 
        2*alp3*alp3*pw2(B1)*pw2(sig3) + 3*(B1 - B2)*(cos(2*(-1 + alpha)*sigma)*
            (-3*B1 + 3*B2 + 6*alpha*(-B1 + B2)*sig2 + ((-8 + 7*alpha)*B1 - 3*(-2 + alpha)*B2)*alp3*sig2*sig2 + 2*B1*alp3*alp2*pw2(sig3)) + 
           sigma*(-3*(-1 + 2*alpha)*(B1 - B2) + 2*(-4*B1 + 3*B2)*alp3*sig2 + ((-7 + 2*alpha)*B1 + 3*B2)*alp2*alp2*sig2*sig2)*
            sin(2*(-1 + alpha)*sigma))));
   }
   else {
-    return -prefactor*0.03125*((exp(-8*N - 2.*II*sigma)*((-3*(B2 + B2*alp2*sig2) + B1*(3 + 3*alp2*sig2 - 2.*II*alp3*sig3))*
+    return -prefactor*0.03125*((exp(- 2.*II*sigma)*((-3*(B2 + B2*alp2*sig2) + B1*(3 + 3*alp2*sig2 - 2.*II*alp3*sig3))*
           (-3.*II*B3*alp3*(1 + bet2*sig2) + 2*B1*bet3*bet3*sig3 - 2*B2*bet3*bet3*sig3 + 
             B2*alp3*(3.*II + 3.*II*bet2*sig2 + 2*bet3*sig3)) + 
          3*(B1 - B2)*exp(-2.*II*(-1 + alpha)*sigma)*(3.*II*B3*alp3*(1 + bet2*sig2) + 2*B1*bet3*bet3*sig3 - 
@@ -320,7 +328,7 @@ double RecalPphipi(double &N, const state_type &phi, double N1, double N2, bool 
                2*B2*bet3*bet3*sig3 + B2*alp3*(3.*II + 3.*II*bet2*sig2 + 2*bet3*sig3))*
              (II + alpha*sigma)*(II + alpha*sigma) + (B2 - B3)*alp3*
              (3.*II*(-B1 + B2) + 3.*II*(-B1 + B2)*alp2*sig2 + 2*B1*alp3*sig3)*(II + beta*sigma)*(II + beta*sigma)))/
-       pw2(B2*(alp3 - bet3) + B1*bet3)).imag()/pw2(alp3*B1*bet3*sig3*sig3)/sigma*exp(5*N));
+       pw2(B2*(alp3 - bet3) + B1*bet3)).imag()/pw2(alp3*B1*bet3*sig3*sig3)/sigma);
   }
 }
 
