@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
     if(scompaction) compaction(Ndata,seed_val);
     #if MODEL==2
       save_N1N2(seed_val);
-      USRLength(seed_val);
+      if(susrlength) USRLength(seed_val);
     #endif
     Nfile.close();
     fieldfile.close();

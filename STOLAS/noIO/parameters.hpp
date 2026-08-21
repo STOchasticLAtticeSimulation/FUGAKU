@@ -32,6 +32,7 @@ constexpr bool sanimation = false; // Output the animation
 constexpr bool sweight = true; // Output the weight
 constexpr bool scompaction = true; // Output the compaction
 constexpr bool snoisemap = false; // Output the noisemap
+constexpr bool susrlength = false; // Output the noisemap
 
 // Importance sampling
 const double nbias = 16.; // wavenumber of the bias
