@@ -34,7 +34,12 @@ mkdir -p "$data/$model"
 mkdir -p "$data/$model/animation"
 
 ll=0
-for ((i=ll; i<ll+1; i++))
+numdata=1
+for ((i=ll; i<ll+numdata; i++))
 do
-	./STOLAS $i
+for m in 2000.
+do
+   echo "calPzeta=$m"
+   SIGMA=$m ./STOLAS $i
+done
 done

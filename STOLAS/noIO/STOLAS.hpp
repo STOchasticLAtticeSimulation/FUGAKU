@@ -61,6 +61,7 @@ const std::string prbfileprefix = sdatadir + "/" + model + "/probabilities";
 const std::string logwfileprefix = sdatadir + "/" + model + "/logw_";
 
 bool Nfilefail, superH = false;
+bool FFTwisdomFirst = false;
 
 // int noisefiledirNo, noisefileNo;
 std::ofstream Nfile, fieldfile, fieldfileA, trajectoryfile, powfile, powsfile, cmpfile, prbfile, logwfile, Noisefile;

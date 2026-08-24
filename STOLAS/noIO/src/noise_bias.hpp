@@ -18,10 +18,14 @@ inline void init_fftw_global() {
     if(splan && FFTWwisdom){
       plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_PATIENT);
       fftw_export_wisdom_to_filename((sdatadir+"/wisdom"+std::to_string(NLnoise)+".dat").c_str());
-    } else if (FFTWwisdom){
+      std::cout << "Make the FFTW plan." << std::endl;
+      FFTwisdomFirst=true;
+    }
+    else if (FFTWwisdom){
       fftw_import_wisdom_from_filename((sdatadir+"/wisdom"+std::to_string(NLnoise)+".dat").c_str());
       plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_WISDOM_ONLY);
-    } else{
+    }
+    else{
       plan = fftw_plan_dft_3d(NLnoise, NLnoise, NLnoise, in, out, FFTW_FORWARD, FFTW_MEASURE);
     }
 
