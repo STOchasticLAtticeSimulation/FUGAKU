@@ -125,7 +125,6 @@ void animation(std::array<state_type,NLnoiseAll>& phievol, int NoisefiledirNo, i
   fieldfileA.close();
 }
 
-
 // Calculate power spectrum
 void spectrum(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {  
   powsfile.open(powsfileprefix + std::string(".dat"), std::ios::app);
@@ -160,7 +159,6 @@ void spectrum(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   std::cout << "ExportPowerSpectrum" << std::endl;
 }
 
-
 // calculation of weight
 void weight(int seed) {
   double logw = 0.;
@@ -171,7 +169,6 @@ void weight(int seed) {
   }
   logwfile << seed << ' ' << logw << std::endl;
 }
-
 
 // Calculate compaction function
 void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {

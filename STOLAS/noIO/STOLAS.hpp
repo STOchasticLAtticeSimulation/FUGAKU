@@ -92,6 +92,8 @@ std::array<double,NLnoise/2> dzetar{};
   std::array<double,NLnoiseAll> N2list{};
   std::array<double,NLnoiseAll> broken1list{};
   std::array<double,NLnoiseAll> broken2list{};
+  const double dNsub = dN / divdN;
+  const int ndiv  = (int)divdN;
 #endif
 
 #include "src/noise_bias.hpp"
@@ -164,8 +166,8 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int I
 
       double dw = dwlist[0][i];
       if(i==0 && sweight){
-         weightlist[n] = dw; // save weight data
-         weightbool[n] = true;
+        weightlist[n] = dw; // save weight data
+        weightbool[n] = true;
       }
 
       double Bias = biaslist[0][i];
@@ -174,8 +176,6 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int I
       #if MODEL==2
         double phi_old = phi[0]; // for reflective boundary
         double Nstep = N;
-        const double dNsub = dN / divdN;
-        const int ndiv  = (int)divdN;
         for (int dn = 0; dn < ndiv; ++dn) {
           stepper_noise.do_step(dphidN, phi, Nstep, dNsub);
           Nstep += dNsub;
