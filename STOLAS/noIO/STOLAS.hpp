@@ -32,6 +32,8 @@ std::normal_distribution<> dist(0., 1.);
 #include "parameters.hpp"
 const double sqrt_dN = std::sqrt(dN);
 constexpr int NLnoiseAll = NLnoise*NLnoise*NLnoise;
+constexpr int NLnoiseHalf = NLnoise/2 + 1; // halved (fastest) dimension for r2c/c2r FFTW transforms
+constexpr int NLnoiseHalfAll = NLnoise*NLnoise*NLnoiseHalf;
 const int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN); // Total number of time step with noise
 const int firststep = ceil(log(nsigmareset/sigma)/dN);
 const int itpstep = ceil((log(nsigmareset/sigma)-log(nsigmareset/sigma/2.))/dN);
@@ -95,8 +97,8 @@ std::array<double,NLnoise/2> dzetar{};
 #elif MODEL==2
   std::array<double,NLnoiseAll> N1list{};
   std::array<double,NLnoiseAll> N2list{};
-  std::array<double,NLnoiseAll> broken1list{};
-  std::array<double,NLnoiseAll> broken2list{};
+  std::array<bool,NLnoiseAll> broken1list{};
+  std::array<bool,NLnoiseAll> broken2list{};
   const double dNsub = dN / divdN;
   const int ndiv  = (int)divdN;
 #endif

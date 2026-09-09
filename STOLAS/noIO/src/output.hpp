@@ -127,26 +127,33 @@ void animation(std::array<state_type,NLnoiseAll>& phievol, int NoisefiledirNo, i
 
 // Calculate power spectrum
 void spectrum(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {  
-  powsfile.open(powsfileprefix + std::string(".dat"), std::ios::app);
+  powsfile.open(powsfileprefix + std::string(".dat"));//, std::ios::app);
   powsfile << std::setprecision(10);
 
   fft_1D_real(Ndata);
 
-  LOOP{
-    int nxt, nyt, nzt; // shifted index
-    nxt = (i<=NLnoise/2 ? i : i-NLnoise);
-    nyt = (j<=NLnoise/2 ? j : j-NLnoise);
-    nzt = (k<=NLnoise/2 ? k : k-NLnoise);
-    int idx = i*NLnoise*NLnoise + j*NLnoise + k;
-    
-    double rk=nxt*nxt+nyt*nyt+nzt*nzt;
+  // bkspectrum only stores the non-redundant r2c half (k in [0,NLnoise/2]);
+  // interior k-planes represent a conjugate pair and are weighted x2, while
+  // the self-conjugate k=0/k=NLnoise/2 planes already cover every (i,j) once.
+  for (int i = 0; i < NLnoise; i++) {
+    int nxt = (i<=NLnoise/2 ? i : i-NLnoise);
+    for (int j = 0; j < NLnoise; j++) {
+      int nyt = (j<=NLnoise/2 ? j : j-NLnoise);
+      for (int k = 0; k < NLnoiseHalf; k++) {
+        int nzt = k;
+        int idx = i*NLnoise*NLnoiseHalf + j*NLnoiseHalf + k;
+        double weight = (k==0 || k==NLnoise/2) ? 1. : 2.;
 
-    double LogNk = log(sqrt(rk));
-    double calPk = norm(bkspectrum[idx])/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise;
-    for (size_t ii = 0; ii < imax; ii++) {
-      if ((dlogn*ii-LogNk)<dlogn/2. && -dlogn/2.<=(dlogn*ii-LogNk) && rk!=0) {
-        disc_power[ii] += calPk/dlogn;
-        break;
+        double rk=nxt*nxt+nyt*nyt+nzt*nzt;
+
+        double LogNk = log(sqrt(rk));
+        double calPk = weight*norm(bkspectrum[idx])/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise/NLnoise;
+        for (size_t ii = 0; ii < imax; ii++) {
+          if ((dlogn*ii-LogNk)<dlogn/2. && -dlogn/2.<=(dlogn*ii-LogNk) && rk!=0) {
+            disc_power[ii] += calPk/dlogn;
+            break;
+          }
+        }
       }
     }
   }
