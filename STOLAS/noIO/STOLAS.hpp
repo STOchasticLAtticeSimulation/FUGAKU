@@ -59,12 +59,14 @@ const std::string powsfileprefix = sdatadir + "/" + model + "/powers";
 const std::string cmpfileprefix = sdatadir + "/" + model + "/compaction_";
 const std::string prbfileprefix = sdatadir + "/" + model + "/probabilities";
 const std::string logwfileprefix = sdatadir + "/" + model + "/logw_";
+const std::string mu2fileprefix = sdatadir + "/" + model + "/mu2_";
+const std::string k3fileprefix = sdatadir + "/" + model + "/k3_";
 
 bool Nfilefail, superH = false;
 bool FFTwisdomFirst = false;
 
 // int noisefiledirNo, noisefileNo;
-std::ofstream Nfile, fieldfile, fieldfileA, trajectoryfile, powfile, powsfile, cmpfile, prbfile, logwfile, Noisefile;
+std::ofstream Nfile, fieldfile, fieldfileA, trajectoryfile, powfile, powsfile, cmpfile, prbfile, logwfile, Noisefile, mu2file, k3file;
 std::array<double,NLnoiseAll> Ndata{};
 std::array<double,NLnoiseAll> Nnoise{}; // use for EoN noise
 std::array<double,NLnoiseAll> Ntotal{}; // use for averaging
@@ -76,6 +78,9 @@ std::array<state_type,NLnoiseAll> Phidata{}; // use for zoom
 
 std::array<std::array<double,NLnoiseAll>,NFIELDS+1> biaslist{};
 std::array<std::array<double,NLnoiseAll>,NFIELDS+1+1> dwlist{};
+std::array<double,NLnoiseAll> laplacian{};
+std::array<double,NLnoiseAll> mutwo{};
+std::array<double,NLnoiseAll> kthree{};
 
 // output
 std::array<double,imax> disc_power{};
@@ -97,9 +102,9 @@ std::array<double,NLnoise/2> dzetar{};
 #endif
 
 #include "src/noise_bias.hpp"
-#include "src/output.hpp"
 #include "src/zoom.hpp"
 #include "src/laplacian.hpp"
+#include "src/output.hpp"
 
 
 // -- functions -----------------------
@@ -133,6 +138,12 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int I
     #else
       dwlist_gen(n*dN,engine,0); // for phi
       dwlist_gen(n*dN,engine,1); // for pi
+
+      // non correlated noise
+      // for (int i=0; i<NLnoiseAll; i++){
+      //   dwlist[0][i]=dist(engine);
+      //   dwlist[1][i]=dist(engine);
+      // }
     #endif
 
     if(snoisemap){

@@ -83,6 +83,9 @@ int main(int argc, char* argv[])
     if(spower) spectrum(Ndata,interpolatingnumber);
     if(sfield) save_field();
     if(sweight) weight(seed_val);
+
+    mu2(Ndata, seed_val);
+
     if(scompaction) compaction(Ndata,seed_val);
     #if MODEL==2
       save_N1N2(seed_val);

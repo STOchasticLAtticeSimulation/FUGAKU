@@ -37,7 +37,7 @@ ll=0
 numdata=1
 for ((i=ll; i<ll+numdata; i++))
 do
-for m in 2000.
+for m in 1000.
 do
    echo "calPzeta=$m"
    SIGMA=$m ./STOLAS $i

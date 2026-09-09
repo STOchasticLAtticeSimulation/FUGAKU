@@ -170,6 +170,39 @@ void weight(int seed) {
   logwfile << seed << ' ' << logw << std::endl;
 }
 
+// Calculate mu2
+void mu2(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
+  std::string NLfilename = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(noisefiledirNo);
+  std::string InterFileName = NLfilename + std::string("_") + std::to_string(0);
+  std::string SigmaFileName = std::string("_") + std::to_string(int(calPzeta0));
+
+  mu2file.open(mu2fileprefix + InterFileName + SigmaFileName + std::string(".bin"), std::ios::binary);
+  k3file.open(k3fileprefix + InterFileName + SigmaFileName + std::string(".bin"), std::ios::binary);
+  mu2file << std::setprecision(10);
+  k3file << std::setprecision(10);
+
+  computeLaplacian(Ndata);
+  for (size_t n = 0; n < NLnoiseAll; n++) {
+    mutwo[n] = -1.*laplacian[n];
+  }
+
+  mu2file.write(reinterpret_cast<const char*>(&mutwo), sizeof(double) * NLnoiseAll);
+  std::cout << "Export mu2 map" << std::endl;
+
+  computeLaplacian(laplacian);
+  for (size_t n = 0; n < NLnoiseAll; n++) {
+    if(mutwo[n]<1.e-12) {
+      kthree[n] = 0;
+    }
+    else {
+      kthree[n] = laplacian[n]/mutwo[n];
+    }
+  }
+
+  k3file.write(reinterpret_cast<const char*>(&kthree), sizeof(double) * NLnoiseAll);
+  std::cout << "Export k3 map" << std::endl;
+}
+
 // Calculate compaction function
 void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   prbfile.open(prbfileprefix + std::string(".dat"), std::ios::app);
@@ -190,9 +223,12 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   }
 
   // Find max value
-  int maxNpoint = std::distance(Ndata.begin(), std::max_element(Ndata.begin(), Ndata.end()));
-  int xmax = maxNpoint/NLnoise/NLnoise, ymax = (maxNpoint%(NLnoise*NLnoise))/NLnoise, zmax = maxNpoint%NLnoise;
-  // int xmax = 0, ymax = 0, zmax = 0;
+  // mutwo = laplacian;
+  int maxNpoint = std::distance(laplacian.begin(), std::max_element(laplacian.begin(), laplacian.end()));
+  std::cout << maxNpoint << " " << std::distance(Ndata.begin(), std::max_element(Ndata.begin(), Ndata.end())) << std::endl;
+  // int xmax = maxNpoint/NLnoise/NLnoise, ymax = (maxNpoint%(NLnoise*NLnoise))/NLnoise, zmax = maxNpoint%NLnoise;
+  // int maxNpoint = std::distance(Ndata.begin(), std::max_element(Ndata.begin(), Ndata.end()));
+  int xmax = 0, ymax = 0, zmax = 0;
 
   // radial profile
   for (size_t i=0; i<NLnoise*NLnoise*NLnoise; i++) {

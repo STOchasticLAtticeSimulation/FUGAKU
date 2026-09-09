@@ -9,8 +9,8 @@
 #$ -e job_out
 #$ -pe OpenMP 14
 
-ll=11
-numdata=1
+ll=0
+numdata=100
 for ((i=ll; i<ll+numdata; i++))
 do
 for m in 2000.
