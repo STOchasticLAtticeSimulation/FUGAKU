@@ -224,8 +224,8 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
 
   // Find max value
   // mutwo = laplacian;
-  int maxNpoint = std::distance(laplacian.begin(), std::max_element(laplacian.begin(), laplacian.end()));
-  std::cout << maxNpoint << " " << std::distance(Ndata.begin(), std::max_element(Ndata.begin(), Ndata.end())) << std::endl;
+  // int maxNpoint = std::distance(laplacian.begin(), std::max_element(laplacian.begin(), laplacian.end()));
+  // std::cout << maxNpoint << " " << std::distance(Ndata.begin(), std::max_element(Ndata.begin(), Ndata.end())) << std::endl;
   // int xmax = maxNpoint/NLnoise/NLnoise, ymax = (maxNpoint%(NLnoise*NLnoise))/NLnoise, zmax = maxNpoint%NLnoise;
   // int maxNpoint = std::distance(Ndata.begin(), std::max_element(Ndata.begin(), Ndata.end()));
   int xmax = 0, ymax = 0, zmax = 0;
