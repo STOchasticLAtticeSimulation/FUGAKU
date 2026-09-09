@@ -10,9 +10,46 @@ inline fftw_complex *in, *inhalf;
 inline double *out;
 inline fftw_plan plan;
 
+// |k| (in lattice-site units) for every (nx,ny,nz), precomputed once so
+// innsigma() below is a table lookup instead of a fresh sqrt() every call.
+// Called from 5 separate NLnoise^3 sweeps per step (dwlist_gen x2, its
+// mirror pass, biaslist1D x2), and the sqrt itself doesn't depend on
+// nsigma/dn, so it was pure repeated work.
+//
+// REPRODUCIBILITY: dwlist_gen's first fill loop below is serial specifically
+// because its dist(engine) call order (and how many times it's called per
+// point -- 0, 1, or 2, depending on innsigma/realpoint/complexpoint) fixes
+// the entire noise realization for that step; that loop's compiler can't
+// vectorize it anyway (dist(engine) is a stateful, non-vectorizable call
+// gating each innsigma check), so it's guaranteed to evaluate innsigma
+// scalar, one (i,j,k) at a time, in the exact original iteration order. The
+// table below is therefore computed with vectorization explicitly disabled
+// too, so every entry is bit-identical to what a fresh inline
+// sqrt(nxt*nxt+nyt*nyt+nzt*nzt) would have produced at that call site --
+// caching the value can't change which points draw from the RNG, only how
+// fast the shell test runs.
+inline std::array<double,NLnoiseAll> shellRadius{};
+
+inline void init_shell_radius() {
+#pragma clang loop vectorize(disable) interleave(disable)
+  for (int nx = 0; nx < NLnoise; nx++) {
+    int nxt = (nx<=NLnoise/2 ? nx : nx-NLnoise);
+#pragma clang loop vectorize(disable) interleave(disable)
+    for (int ny = 0; ny < NLnoise; ny++) {
+      int nyt = (ny<=NLnoise/2 ? ny : ny-NLnoise);
+#pragma clang loop vectorize(disable) interleave(disable)
+      for (int nz = 0; nz < NLnoise; nz++) {
+        int nzt = (nz<=NLnoise/2 ? nz : nz-NLnoise);
+        shellRadius[nx*NLnoise*NLnoise + ny*NLnoise + nz] = sqrt(nxt*nxt + nyt*nyt + nzt*nzt);
+      }
+    }
+  }
+}
+
 inline void init_fftw_global() {
   static bool is_initialized = false;
   if (!is_initialized) {
+    init_shell_radius();
     fftw_init_threads();
     #ifdef _OPENMP
       fftw_plan_with_nthreads(omp_get_max_threads());
@@ -43,11 +80,8 @@ inline void init_fftw_global() {
 
 // judge if point is in nsigma sphere shell
 inline bool innsigma(int nx, int ny, int nz, int Num, double nsigma, double dn) {
-  int nxt = (nx<=Num/2 ? nx : nx-Num);
-  int nyt = (ny<=Num/2 ? ny : ny-Num);
-  int nzt = (nz<=Num/2 ? nz : nz-Num);
-
-  return std::abs(sqrt(nxt*nxt + nyt*nyt + nzt*nzt) - nsigma) <= dn/2.;
+  int idx = nx*Num*Num + ny*Num + nz;
+  return std::abs(shellRadius[idx] - nsigma) <= dn/2.;
 }
 
 // judge real point
