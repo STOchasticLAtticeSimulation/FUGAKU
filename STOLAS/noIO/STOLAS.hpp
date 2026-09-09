@@ -107,6 +107,9 @@ std::array<double,NLnoise/2> dzetar{};
 #include "src/zoom.hpp"
 #include "src/laplacian.hpp"
 #include "src/output.hpp"
+#if MODEL==2
+#include "src/simd_rk4.hpp"
+#endif
 
 
 // -- functions -----------------------
@@ -121,6 +124,13 @@ void initialize(){
   }
   #endif
 
+  // Parallelized with the same schedule(static) as the main per-point loops
+  // so first-touch NUMA placement matches how the data is actually accessed
+  // afterwards (matters on CMG/NUMA machines like Fugaku's A64FX; harmless
+  // on a single-socket Mac).
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
   LOOP{
     phievol[NLnoise*NLnoise*i + NLnoise*j + k] = phii;
   }
@@ -157,13 +167,27 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int I
       }
     }
 
+#if MODEL==2
+    // SIMD-batched drift step (NEON/SVE, see src/simd_rk4.hpp): this replaces
+    // the ndiv-substep RK4 loop below, which profiling showed is >99% of the
+    // per-step lattice cost. phievol is read-only here; results land in
+    // driftedPhievol and are picked up per-point below, after calPphi/calPpi
+    // /RecalPphipi (which need the pre-drift state).
+    simd_rk4_drift_batch(phievol, driftedPhievol, ndiv, dNsub);
+#endif
+
+    // static: matches simd_rk4_drift_batch's schedule(static) above (so the
+    // thread that just computed driftedPhievol[i] is also the one reading it
+    // here -- keeps the two passes CMG/NUMA-local on Fugaku) and, since A64FX
+    // cores are homogeneous (unlike this Mac's P/E core split, where guided's
+    // dynamic rebalancing actually helps), avoids paying guided's per-chunk
+    // dispatch overhead for no load-balancing benefit.
 #ifdef _OPENMP
-#pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(static)
 #endif
     for (int i=0; i<NLnoiseAll; i++){
-      boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
       state_type phi = phievol[i];
-      
+
       #if MODEL==1
         double phiamp = sqrt(calPphi(N,phi,N0list[i],brokenlist[i]));
         double piamp = sqrt(calPpi(N,phi,N0list[i],brokenlist[i]));
@@ -188,12 +212,10 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int I
 
       #if MODEL==2
         double phi_old = phi[0]; // for reflective boundary
-        double Nstep = N;
-        for (int dn = 0; dn < ndiv; ++dn) {
-          stepper_noise.do_step(dphidN, phi, Nstep, dNsub);
-          Nstep += dNsub;
-        }
+        phi[0] = driftedPhievol[i][0];
+        phi[1] = driftedPhievol[i][1];
       #else
+        boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
         stepper_noise.do_step(dphidN, phi, N, dN);
       #endif
 
@@ -373,7 +395,11 @@ void evolutionNoise(int seed, int averagetime) {
 
 
 void dNmap(int InterpolatingNo) {
-  
+
+  // guided (not static) is intentional here: each point runs its own
+  // dense-output zero-crossing search below, and the number of steps to
+  // converge genuinely differs per point -- unlike the drift/noise loops in
+  // evolution(), this one has real per-iteration load imbalance to balance.
 #ifdef _OPENMP
 #pragma omp parallel for schedule(guided)
 #endif
