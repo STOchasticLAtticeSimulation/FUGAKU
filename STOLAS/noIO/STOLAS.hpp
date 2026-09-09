@@ -182,6 +182,11 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int I
     // cores are homogeneous (unlike this Mac's P/E core split, where guided's
     // dynamic rebalancing actually helps), avoids paying guided's per-chunk
     // dispatch overhead for no load-balancing benefit.
+    // GaussianFactor depends only on N (the bias-window envelope), not on
+    // the lattice point i -- hoisted out of the point loop, where it used to
+    // be recomputed (1 exp() call) for all NLnoiseAll points every step.
+    double GaussianFactor = 1./dNbias/sqrt(2.*M_PI) * exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
+
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
@@ -208,7 +213,6 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int I
       }
 
       double Bias = biaslist[0][i];
-      double GaussianFactor = 1./dNbias/sqrt(2*M_PI) * exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
 
       #if MODEL==2
         double phi_old = phi[0]; // for reflective boundary
