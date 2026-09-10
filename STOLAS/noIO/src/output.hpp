@@ -229,13 +229,32 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
     Ndata[n] -= Naverage;
   }
 
-  // Find max value
-  // mutwo = laplacian;
-  // int maxNpoint = std::distance(laplacian.begin(), std::max_element(laplacian.begin(), laplacian.end()));
-  // std::cout << maxNpoint << " " << std::distance(Ndata.begin(), std::max_element(Ndata.begin(), Ndata.end())) << std::endl;
-  // int xmax = maxNpoint/NLnoise/NLnoise, ymax = (maxNpoint%(NLnoise*NLnoise))/NLnoise, zmax = maxNpoint%NLnoise;
-  // int maxNpoint = std::distance(Ndata.begin(), std::max_element(Ndata.begin(), Ndata.end()));
+  // Find the centering point: the bias field (biaslist1D) is built to peak
+  // at index (0,0,0), so that's the natural center for the radial profile
+  // below, but a given noise realization can shift Ndata's actual peak by
+  // a few lattice sites. Search a small neighborhood around the origin
+  // (not the whole box -- a global argmax risks locking onto an unrelated
+  // fluctuation elsewhere in the lattice) and use whichever offset there
+  // maximizes Ndata.
   int xmax = 0, ymax = 0, zmax = 0;
+  {
+    constexpr int centerSearchRadius = 5; // lattice units; tune to taste
+    double bestVal = Ndata[0];
+    for (int dx = -centerSearchRadius; dx <= centerSearchRadius; dx++) {
+      int nx = ((dx % NLnoise) + NLnoise) % NLnoise;
+      for (int dy = -centerSearchRadius; dy <= centerSearchRadius; dy++) {
+        int ny = ((dy % NLnoise) + NLnoise) % NLnoise;
+        for (int dz = -centerSearchRadius; dz <= centerSearchRadius; dz++) {
+          int nz = ((dz % NLnoise) + NLnoise) % NLnoise;
+          double val = Ndata[nx*NLnoise*NLnoise + ny*NLnoise + nz];
+          if (val > bestVal) {
+            bestVal = val;
+            xmax = dx; ymax = dy; zmax = dz;
+          }
+        }
+      }
+    }
+  }
 
   // radial profile
   for (size_t i=0; i<NLnoise*NLnoise*NLnoise; i++) {
