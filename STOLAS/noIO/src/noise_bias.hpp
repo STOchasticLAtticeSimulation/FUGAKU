@@ -1,6 +1,8 @@
 #ifndef INCLUDED_noise_bias_hpp_
 #define INCLUDED_noise_bias_hpp_
 
+#include <cstdint>
+
 // `in` holds the full Hermitian-symmetric spectrum built by dwlist_gen (its
 // realpoint/complexpoint selection is not aligned with the axis FFTW halves,
 // see init_fftw_global), `inhalf` is the non-redundant r2c/c2r half sliced
@@ -14,20 +16,11 @@ inline fftw_plan plan;
 // innsigma() below is a table lookup instead of a fresh sqrt() every call.
 // Called from 5 separate NLnoise^3 sweeps per step (dwlist_gen x2, its
 // mirror pass, biaslist1D x2), and the sqrt itself doesn't depend on
-// nsigma/dn, so it was pure repeated work.
-//
-// REPRODUCIBILITY: dwlist_gen's first fill loop below is serial specifically
-// because its dist(engine) call order (and how many times it's called per
-// point -- 0, 1, or 2, depending on innsigma/realpoint/complexpoint) fixes
-// the entire noise realization for that step; that loop's compiler can't
-// vectorize it anyway (dist(engine) is a stateful, non-vectorizable call
-// gating each innsigma check), so it's guaranteed to evaluate innsigma
-// scalar, one (i,j,k) at a time, in the exact original iteration order. The
-// table below is therefore computed with vectorization explicitly disabled
-// too, so every entry is bit-identical to what a fresh inline
-// sqrt(nxt*nxt+nyt*nyt+nzt*nzt) would have produced at that call site --
-// caching the value can't change which points draw from the RNG, only how
-// fast the shell test runs.
+// nsigma/dn, so it was pure repeated work. Every call site now shares this
+// one table, so they're automatically self-consistent (same shell
+// membership decision everywhere) regardless of vectorization; it's
+// computed scalar (vectorize(disable)) anyway, just to keep it bit-identical
+// to a plain inline sqrt() call.
 inline std::array<double,NLnoiseAll> shellRadius{};
 
 inline void init_shell_radius() {
@@ -104,7 +97,59 @@ inline bool complexpoint(int nx, int ny, int nz, int Num) {
 }
 
 
-void dwlist_gen(double N, std::mt19937& engine, int Nfield) {
+// Counter-based per-point Gaussian noise for dwlist_gen's independent
+// k-modes. Each mode's draw(s) depend only on (seed, step, field, its own
+// flat index) -- no shared mutable RNG state -- so the fill loop below
+// parallelizes trivially, unlike the old shared-std::mt19937 stream (whose
+// dist(engine) call order fixed the whole realization and forced that loop
+// to run serially, one point at a time).
+//
+// This intentionally changes the exact noise realization for a given seed
+// compared to the old scheme (confirmed acceptable: same seed must keep
+// giving the same result from now on, but matching pre-existing runs is not
+// required). The correlation structure of the field is unaffected: it comes
+// entirely from which k-modes get nonzero amplitude (the innsigma shell
+// mask + Hermitian mirroring below) and the subsequent FFT, not from how
+// each independent mode's own random value was produced.
+//
+// SplitMix64 (Vigna, public domain) is used as both the seed mixer and the
+// stream generator; it's a simple, fast, well-studied counter-based
+// generator -- no reason to pay std::mt19937's ~2.5kbit state-init cost per
+// grid point.
+inline uint64_t splitmix64_next(uint64_t &state) {
+  uint64_t z = (state += 0x9E3779B97F4A7C15ULL);
+  z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
+  z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
+  return z ^ (z >> 31);
+}
+
+inline uint64_t hash_mix(uint64_t x) {
+  uint64_t state = x;
+  return splitmix64_next(state);
+}
+
+// Two independent standard normal draws for one lattice point, via
+// Box-Muller (which maps 2 independent uniforms to 2 independent normals in
+// one shot -- exactly the "real + imaginary part" pair complexpoint needs;
+// realpoint just uses z0 and discards z1).
+inline void point_normals(uint64_t seed, uint64_t step, uint64_t field, uint64_t idx, double &z0, double &z1) {
+  uint64_t s = hash_mix(seed);
+  s = hash_mix(s ^ step);
+  s = hash_mix(s ^ field);
+  s = hash_mix(s ^ idx);
+
+  uint64_t r1 = splitmix64_next(s);
+  uint64_t r2 = splitmix64_next(s);
+  double u1 = ((r1 >> 11) + 1) * (1.0/9007199254740992.0); // (0,1], avoids log(0)
+  double u2 = (r2 >> 11) * (1.0/9007199254740992.0);       // [0,1)
+
+  double radius = sqrt(-2.0 * log(u1));
+  double theta = 2.0 * M_PI * u2;
+  z0 = radius * cos(theta);
+  z1 = radius * sin(theta);
+}
+
+void dwlist_gen(double N, int seed, size_t step, int Nfield) {
   int count = 0;
   double nsigma = sigma*exp(N);
 
@@ -116,6 +161,9 @@ void dwlist_gen(double N, std::mt19937& engine, int Nfield) {
     in[i][1] = 0.0;
   }
 
+#ifdef _OPENMP
+#pragma omp parallel for collapse(3) reduction(+:count)
+#endif
   for (int i = 0; i < NLnoise; i++) {
     for (int j = 0; j < NLnoise; j++) {
       for (int k = 0; k < NLnoise; k++) {
@@ -123,11 +171,15 @@ void dwlist_gen(double N, std::mt19937& engine, int Nfield) {
 
         if (innsigma(i, j, k, NLnoise, nsigma, dn)) {
           if (realpoint(i, j, k, NLnoise)) {
-            in[idx][0] = dist(engine);
+            double z0, z1;
+            point_normals((uint64_t)seed, (uint64_t)step, (uint64_t)Nfield, (uint64_t)idx, z0, z1);
+            in[idx][0] = z0;
             count++;
           } else if (complexpoint(i, j, k, NLnoise)) {
-            in[idx][0] = dist(engine) * inv_sqrt2;
-            in[idx][1] = dist(engine) * inv_sqrt2;
+            double z0, z1;
+            point_normals((uint64_t)seed, (uint64_t)step, (uint64_t)Nfield, (uint64_t)idx, z0, z1);
+            in[idx][0] = z0 * inv_sqrt2;
+            in[idx][1] = z1 * inv_sqrt2;
             count++;
           }
         }

@@ -137,7 +137,7 @@ void initialize(){
 }
 
 
-void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int InterpolatingNo) {
+void evolution(int seed, int starttime, int endtime, int InterpolatingNo) {
   double N = (starttime + InterpolatingNo*itpstep)*dN;
   int animationcount = (starttime==firststep ? firststep%aninum : 0); // for animation
   int animationstep = (starttime==firststep ? firststep/((double)aninum) : 0);
@@ -146,20 +146,14 @@ void evolution(int seed, std::mt19937& engine, int starttime, int endtime, int I
     biaslist1D(n*dN);
 
     #if MODEL==3
-      NFLOOP dwlist_gen(n*dN,engine,nf-1);
+      NFLOOP dwlist_gen(n*dN,seed,n,nf-1);
     #else
-      dwlist_gen(n*dN,engine,0); // for phi
-      dwlist_gen(n*dN,engine,1); // for pi
-
-      // non correlated noise
-      // for (int i=0; i<NLnoiseAll; i++){
-      //   dwlist[0][i]=dist(engine);
-      //   dwlist[1][i]=dist(engine);
-      // }
+      dwlist_gen(n*dN,seed,n,0); // for phi
+      dwlist_gen(n*dN,seed,n,1); // for pi
     #endif
 
     if(snoisemap){
-      if(n==totalstep-200) {
+      if(n==totalstep-500) {
         Noisefile.open(sdatadir + "/" + model + "/noisedata/map_" + std::to_string(n) + std::string(".bin"), std::ios::binary);
         Noisefile << std::setprecision(10);
         Noisefile.write(reinterpret_cast<const char*>(&dwlist[0]), sizeof(double) * NLnoiseAll);
