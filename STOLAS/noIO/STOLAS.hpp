@@ -12,7 +12,6 @@
 #include <random>
 #include <sys/time.h>
 #include <complex>
-// #include <bit>
 #include <boost/numeric/odeint.hpp>
 
 #ifdef _OPENMP
@@ -24,10 +23,6 @@ constexpr double LOG2 = 0.69314718055994530942;
 const std::complex<double> II(0, 1);
 std::normal_distribution<> dist(0., 1.);
 
-// constexpr int log2_int(unsigned int x) {
-//   return std::countr_zero(x);
-// }
-
 
 #include "parameters.hpp"
 const double sqrt_dN = std::sqrt(dN);
@@ -38,7 +33,6 @@ const int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN); // Total number of time
 const int firststep = ceil(log(nsigmareset/sigma)/dN);
 const int itpstep = ceil((log(nsigmareset/sigma)-log(nsigmareset/sigma/2.))/dN);
 constexpr double dx = LL/NLnoise; // Spacing of each lattice
-// constexpr int NLpower = log2_int(NLnoise);
 constexpr double imax_double = LOG2*(NLpower-1) / dlogn;
 constexpr int imax = int(imax_double) + (imax_double > int(imax_double));
 const double inv_sqrt2 = 1./sqrt(2.);
@@ -47,7 +41,6 @@ const double sig3 = sigma*sigma*sigma;
 
 
 #include "model.hpp"
-#include "src/vec_op.hpp" // use in laplacian
 #include "src/array_op.hpp"
 #include "src/fft.hpp"
 #include "src/util.hpp"

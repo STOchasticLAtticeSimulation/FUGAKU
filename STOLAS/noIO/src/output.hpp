@@ -219,13 +219,13 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   
   double Naverage = 0;
   double dr = 1;
-  for (size_t n = 0; n < Ndata.size(); n++) {
+  for (size_t n = 0; n < NLnoiseAll; n++) {
     Naverage += Ndata[n];
   }
   Naverage /= NLnoise*NLnoise*NLnoise;
 
   // zeta map
-  for (size_t n = 0; n < Ndata.size(); n++) {
+  for (size_t n = 0; n < NLnoiseAll; n++) {
     Ndata[n] -= Naverage;
   }
 
@@ -257,7 +257,7 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   }
 
   // radial profile
-  for (size_t i=0; i<NLnoise*NLnoise*NLnoise; i++) {
+  for (size_t i=0; i<NLnoiseAll; i++) {
     int nx=i/NLnoise/NLnoise ,ny=(i%(NLnoise*NLnoise))/NLnoise, nz=i%NLnoise;
     
     // centering
