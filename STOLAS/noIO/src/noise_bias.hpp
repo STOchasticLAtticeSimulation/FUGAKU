@@ -3,11 +3,6 @@
 
 #include "noise_shell.hpp"
 
-// `in` holds the full Hermitian-symmetric spectrum built by dwlist_gen (its
-// realpoint/complexpoint selection is not aligned with the axis FFTW halves,
-// see init_fftw_global), `inhalf` is the non-redundant r2c/c2r half sliced
-// out of it (or filled directly, for biaslist1D's trivially symmetric case),
-// and `out` is the real-space result of the c2r transform.
 inline fftw_complex *in, *inhalf;
 inline double *out;
 inline fftw_plan plan;
@@ -43,20 +38,10 @@ inline void init_fftw_global() {
   }
 }
 
-void dwlist_gen(double N, int seed, size_t step, int Nfield) {
+void dwlist_gen(double N, int seed, size_t step, int Nfield, int InterpolatingNo) {
   int count = 0;
   double nsigma = sigma*exp(N);
 
-  // Fused zero + RNG-fill: independent points (realpoint/complexpoint) draw
-  // their own Gaussian(s); everything else (including mirror points, for
-  // now) is zeroed. Mirror points are filled in a second pass below by
-  // copying their partner's value, NOT by recomputing point_normals() again
-  // here -- an earlier version did that (folding all 3 old passes into 1),
-  // but on Fugaku it turned out log/cos/sin inside point_normals() is the
-  // real cost driver, not the barrier count, so doubling those calls (every
-  // mirror point re-running them) canceled out the saved barrier. Keeping
-  // this as 2 passes instead of 3 still saves one barrier over the original
-  // without doubling the transcendental-function work.
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3) reduction(+:count)
 #endif
@@ -67,13 +52,13 @@ void dwlist_gen(double N, int seed, size_t step, int Nfield) {
 
         if (innsigma(i, j, k, NLnoise, nsigma, dn) && realpoint(i, j, k, NLnoise)) {
           double z0, z1;
-          point_normals((uint64_t)seed, (uint64_t)step, (uint64_t)Nfield, (uint64_t)idx, z0, z1);
+          point_normals((uint64_t)seed, (uint64_t)InterpolatingNo, (uint64_t)step, (uint64_t)Nfield, (uint64_t)idx, z0, z1);
           in[idx][0] = z0;
           in[idx][1] = 0.0;
           count++;
         } else if (innsigma(i, j, k, NLnoise, nsigma, dn) && complexpoint(i, j, k, NLnoise)) {
           double z0, z1;
-          point_normals((uint64_t)seed, (uint64_t)step, (uint64_t)Nfield, (uint64_t)idx, z0, z1);
+          point_normals((uint64_t)seed, (uint64_t)InterpolatingNo, (uint64_t)step, (uint64_t)Nfield, (uint64_t)idx, z0, z1);
           in[idx][0] = z0 * inv_sqrt2;
           in[idx][1] = z1 * inv_sqrt2;
           count++;
@@ -85,10 +70,6 @@ void dwlist_gen(double N, int seed, size_t step, int Nfield) {
     }
   }
 
-  // Mirror copy: cheap conjugate copy from the already-written independent
-  // partner (guaranteed to be realpoint/complexpoint, never another mirror
-  // point -- see innsigma/realpoint/complexpoint above), same as before
-  // this function used a pure per-point RNG.
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3) reduction(+:count)
 #endif
@@ -119,10 +100,6 @@ void dwlist_gen(double N, int seed, size_t step, int Nfield) {
     return;
   }
 
-  // Slice out the non-redundant half (k <= NLnoise/2) while normalizing --
-  // the c2r transform reconstructs the rest via Hermitian symmetry, so the
-  // redundant half of `in` never needs normalizing at all (was a separate
-  // full-cube pass before).
   double sqrt_count = sqrt((double)count);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
@@ -153,10 +130,6 @@ void biaslist1D(double N) {
   int count = 0;
   double nsigma = sigma*exp(N);
 
-  // innsigma depends only on |k|, so the shell indicator is already
-  // Hermitian-symmetric: fill the non-redundant half directly, no mirroring
-  // needed. count still has to run over the full cube to match the original
-  // normalization (1/count summed over the whole shell).
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3) reduction(+:count)
 #endif
@@ -174,8 +147,6 @@ void biaslist1D(double N) {
     return;
   }
 
-  // Fused zero + shell-fill (was two separate full-sweep passes): every
-  // point in the non-redundant half either gets the shell weight or zero.
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif

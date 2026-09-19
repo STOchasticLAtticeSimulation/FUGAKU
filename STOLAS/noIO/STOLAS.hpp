@@ -121,10 +121,6 @@ void initialize(){
   }
   #endif
 
-  // Parallelized with the same schedule(static) as the main per-point loops
-  // so first-touch NUMA placement matches how the data is actually accessed
-  // afterwards (matters on CMG/NUMA machines like Fugaku's A64FX; harmless
-  // on a single-socket Mac).
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
@@ -143,10 +139,10 @@ void evolution(int seed, int starttime, int endtime, int InterpolatingNo) {
     biaslist1D(n*dN);
 
     #if MODEL==3
-      NFLOOP dwlist_gen(n*dN,seed,n,nf-1);
+      NFLOOP dwlist_gen(n*dN,seed,n,nf-1,InterpolatingNo);
     #else
-      dwlist_gen(n*dN,seed,n,0); // for phi
-      dwlist_gen(n*dN,seed,n,1); // for pi
+      dwlist_gen(n*dN,seed,n,0,InterpolatingNo); // for phi
+      dwlist_gen(n*dN,seed,n,1,InterpolatingNo); // for pi
     #endif
 
     if(snoisemap){
@@ -159,23 +155,9 @@ void evolution(int seed, int starttime, int endtime, int InterpolatingNo) {
     }
 
 #if MODEL==2
-    // SIMD-batched drift step (NEON/SVE, see src/simd_rk4.hpp): this replaces
-    // the ndiv-substep RK4 loop below, which profiling showed is >99% of the
-    // per-step lattice cost. phievol is read-only here; results land in
-    // driftedPhievol and are picked up per-point below, after calPphi/calPpi
-    // /RecalPphipi (which need the pre-drift state).
     simd_rk4_drift_batch(phievol, driftedPhievol, ndiv, dNsub);
 #endif
 
-    // static: matches simd_rk4_drift_batch's schedule(static) above (so the
-    // thread that just computed driftedPhievol[i] is also the one reading it
-    // here -- keeps the two passes CMG/NUMA-local on Fugaku) and, since A64FX
-    // cores are homogeneous (unlike this Mac's P/E core split, where guided's
-    // dynamic rebalancing actually helps), avoids paying guided's per-chunk
-    // dispatch overhead for no load-balancing benefit.
-    // GaussianFactor depends only on N (the bias-window envelope), not on
-    // the lattice point i -- hoisted out of the point loop, where it used to
-    // be recomputed (1 exp() call) for all NLnoiseAll points every step.
     double GaussianFactor = 1./dNbias/sqrt(2.*M_PI) * exp(-(N-Nbias)*(N-Nbias)/2./dNbias/dNbias);
 
 #ifdef _OPENMP
@@ -391,10 +373,6 @@ void evolutionNoise(int seed, int averagetime) {
 
 void dNmap(int InterpolatingNo) {
 
-  // guided (not static) is intentional here: each point runs its own
-  // dense-output zero-crossing search below, and the number of steps to
-  // converge genuinely differs per point -- unlike the drift/noise loops in
-  // evolution(), this one has real per-iteration load imbalance to balance.
 #ifdef _OPENMP
 #pragma omp parallel for schedule(guided)
 #endif

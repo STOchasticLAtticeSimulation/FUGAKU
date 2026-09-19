@@ -3,14 +3,6 @@
 
 #include <cstdint>
 
-// Shared by both FFT backends (src/noise_bias.hpp = FFTW, Mac/default;
-// src/noise_bias_ssl2.hpp = Fujitsu C-SSL II, Fugaku/-DUSE_SSL2): which
-// k-modes are in the noise shell, which of those are independent degrees
-// of freedom vs. Hermitian mirrors, and the per-mode Gaussian draw. None of
-// this depends on which library actually runs the FFT.
-
-// |k| (in lattice-site units) for every (nx,ny,nz), precomputed once so
-// innsigma() below is a table lookup instead of a fresh sqrt() every call.
 inline std::array<double,NLnoiseAll> shellRadius{};
 
 inline void init_shell_radius() {
@@ -54,17 +46,6 @@ inline bool complexpoint(int nx, int ny, int nz, int Num) {
     (nxt==Num/2 && 1<=nyt && nyt!=Num/2 && nzt==0) || (1<=nxt && nxt!=Num/2 && nyt==0 && nzt==Num/2) || (nxt==0 && nyt==Num/2 && 1<=nzt && nzt!=Num/2);
 }
 
-// Counter-based per-point Gaussian noise for the independent k-modes. Each
-// mode's draw(s) depend only on (seed, step, field, its own flat index) --
-// no shared mutable RNG state -- so fill loops over this parallelize
-// trivially. Changes the exact noise realization vs. the old shared-
-// std::mt19937 stream (confirmed acceptable: same seed keeps giving the
-// same result, matching pre-existing runs is not required); the shell's
-// correlation structure is unaffected since it comes entirely from which
-// k-modes get nonzero amplitude, not from how each one's value was drawn.
-//
-// SplitMix64 (Vigna, public domain): simple, fast, no ~2.5kbit
-// std::mt19937 state-init cost per grid point.
 inline uint64_t splitmix64_next(uint64_t &state) {
   uint64_t z = (state += 0x9E3779B97F4A7C15ULL);
   z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
@@ -77,19 +58,17 @@ inline uint64_t hash_mix(uint64_t x) {
   return splitmix64_next(state);
 }
 
-// Two independent standard normal draws for one lattice point, via
-// Box-Muller (2 independent uniforms -> 2 independent normals in one shot
-// -- the real+imaginary pair complexpoint needs; realpoint uses z0 only).
-inline void point_normals(uint64_t seed, uint64_t step, uint64_t field, uint64_t idx, double &z0, double &z1) {
+inline void point_normals(uint64_t seed, uint64_t level, uint64_t step, uint64_t field, uint64_t idx, double &z0, double &z1) {
   uint64_t s = hash_mix(seed);
+  s = hash_mix(s ^ level);
   s = hash_mix(s ^ step);
   s = hash_mix(s ^ field);
   s = hash_mix(s ^ idx);
 
   uint64_t r1 = splitmix64_next(s);
   uint64_t r2 = splitmix64_next(s);
-  double u1 = ((r1 >> 11) + 1) * (1.0/9007199254740992.0); // (0,1], avoids log(0)
-  double u2 = (r2 >> 11) * (1.0/9007199254740992.0);       // [0,1)
+  double u1 = ((r1 >> 11) + 1) * (1.0/9007199254740992.0);
+  double u2 = (r2 >> 11) * (1.0/9007199254740992.0);
 
   double radius = sqrt(-2.0 * log(u1));
   double theta = 2.0 * M_PI * u2;

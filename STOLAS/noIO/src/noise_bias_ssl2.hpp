@@ -45,7 +45,7 @@ inline void ssl2_c2r_transform() {
   }
 }
 
-void dwlist_gen(double N, int seed, size_t step, int Nfield) {
+void dwlist_gen(double N, int seed, size_t step, int Nfield, int InterpolatingNo) {
   int count = 0;
   double nsigma = sigma*exp(N);
 
@@ -59,13 +59,13 @@ void dwlist_gen(double N, int seed, size_t step, int Nfield) {
 
         if (innsigma(i, j, k, NLnoise, nsigma, dn) && realpoint(i, j, k, NLnoise)) {
           double z0, z1;
-          point_normals((uint64_t)seed, (uint64_t)step, (uint64_t)Nfield, (uint64_t)idx, z0, z1);
+          point_normals((uint64_t)seed, (uint64_t)InterpolatingNo, (uint64_t)step, (uint64_t)Nfield, (uint64_t)idx, z0, z1);
           workFull[idx][0] = z0;
           workFull[idx][1] = 0.0;
           count++;
         } else if (innsigma(i, j, k, NLnoise, nsigma, dn) && complexpoint(i, j, k, NLnoise)) {
           double z0, z1;
-          point_normals((uint64_t)seed, (uint64_t)step, (uint64_t)Nfield, (uint64_t)idx, z0, z1);
+          point_normals((uint64_t)seed, (uint64_t)InterpolatingNo, (uint64_t)step, (uint64_t)Nfield, (uint64_t)idx, z0, z1);
           workFull[idx][0] = z0 * inv_sqrt2;
           workFull[idx][1] = z1 * inv_sqrt2;
           count++;

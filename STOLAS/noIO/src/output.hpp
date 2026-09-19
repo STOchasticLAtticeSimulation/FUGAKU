@@ -2,43 +2,46 @@
 #define INCLUDED_output_hpp_
 
 
+// Common file name suffix of the per-simulation outputs:
+// <NLnoise>_<NFIELDS>_<NoisefiledirNo>_<Interpolatingnumber>_<calPzeta0>
+std::string SimFileName(int NoisefiledirNo, int Interpolatingnumber){
+  return std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo)
+    + std::string("_") + std::to_string(Interpolatingnumber) + std::string("_") + std::to_string(int(calPzeta0));
+}
+
 void OpenFiles(int NoisefiledirNo, int Interpolatingnumber){
-  std::string NLfilename = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo);
-  std::string InterFileName = NLfilename + std::string("_") + std::to_string(Interpolatingnumber);
+  std::string FileName = SimFileName(NoisefiledirNo, Interpolatingnumber);
 
-  std::string SigmaFileName = std::string("_") + std::to_string(int(calPzeta0));
-
-  // Nfile.open(Nfileprefix + InterFileName + std::string(".dat"));
-  Nfile.open(Nfileprefix + InterFileName + SigmaFileName + std::string(".bin"), std::ios::binary);
+  Nfile.open(Nfileprefix + FileName + std::string(".bin"), std::ios::binary);
   Nfile << std::setprecision(10);
   Nfilefail = Nfile.fail();
 
   if (sfield) {
-    fieldfile.open(fieldfileprefix + InterFileName + std::string(".dat"));
+    fieldfile.open(fieldfileprefix + FileName + std::string(".dat"));
     fieldfile << std::setprecision(10);
   }
   
   if (strajectory) {
-    trajectoryfile.open(trajectoryfileprefix + InterFileName + std::string(".dat"));
+    trajectoryfile.open(trajectoryfileprefix + FileName + std::string(".dat"));
     trajectoryfile << std::setprecision(10);
   }
 
   if (sweight) {
-    logwfile.open(logwfileprefix + InterFileName + std::string(".dat"));
+    logwfile.open(logwfileprefix + FileName + std::string(".dat"));
   }
 
-  if (snoisemap) {
-    Noisefile.open(sdatadir + "/" + model + "/noisedata/map_" + InterFileName + std::string(".bin"), std::ios::binary);
-    Noisefile << std::setprecision(10);
-  }
+  // if (snoisemap) {
+  //   Noisefile.open(sdatadir + "/" + model + "/noisedata/map_" + FileName + std::string(".bin"), std::ios::binary);
+  //   Noisefile << std::setprecision(10);
+  // }
   
 }
 
 #if MODEL==2
 void save_N1N2(int NoisefiledirNo){
   std::ofstream N1N2fileA;
-  std::string fFileName = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo) + std::string("_") + std::to_string(0);
-  N1N2fileA.open(sdatadir + "/" + model + "/N1N2_" + fFileName + std::string(".dat"));
+  std::string FileName = SimFileName(NoisefiledirNo, 0);
+  N1N2fileA.open(sdatadir + "/" + model + "/N1N2_" + FileName + std::string(".dat"));
   N1N2fileA << std::setprecision(10);
 
   double N1av=0., N2av=0.;
@@ -53,9 +56,8 @@ void save_N1N2(int NoisefiledirNo){
 
 void USRLength(int NoisefiledirNo){
   std::ofstream N1N2fileA;
-  std::string fFileName = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo) + std::string("_") + std::to_string(0);
-  // N1N2fileA.open(sdatadir + "/" + model + "/N1N2Length_" + fFileName + std::string(".dat"));
-  N1N2fileA.open(sdatadir + "/" + model + "/N1N2Length_" + fFileName + std::string("_") + std::to_string(int(calPzeta0)) + std::string(".bin"), std::ios::binary);
+  std::string FileName = SimFileName(NoisefiledirNo, 0);
+  N1N2fileA.open(sdatadir + "/" + model + "/N1N2Length_" + FileName + std::string(".bin"), std::ios::binary);
   N1N2fileA << std::setprecision(15);
 
   static std::array<double, 2 * NLnoiseAll> buffer;
@@ -70,7 +72,6 @@ void USRLength(int NoisefiledirNo){
 #endif
 
 void save_zeta(){
-  // for (int i=0; i<NLnoiseAll; i++) Nfile << i << ' ' << Ndata[i] << std::endl;
   Nfile.write(reinterpret_cast<const char*>(&Ndata), sizeof(double) * NLnoiseAll);
   std::cout << "Export delta N map" << std::endl;
 }
@@ -99,9 +100,8 @@ void save_trajectory(state_type PHI, double Ntime){
 }
 
 void animation(std::array<state_type,NLnoiseAll>& phievol, int NoisefiledirNo, int Ntime){
-  std::string fFileName = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(NoisefiledirNo) + std::string("_") + std::to_string(Ntime);
-  // fieldfileA.open(animationfileprefix + fFileName + std::string(".dat"));
-  fieldfileA.open(animationfileprefix + fFileName + std::string(".bin"), std::ios::binary);
+  std::string FileName = SimFileName(NoisefiledirNo, Ntime);
+  fieldfileA.open(animationfileprefix + FileName + std::string(".bin"), std::ios::binary);
   fieldfileA << std::setprecision(10);
 
   static std::array<double, 2 * NLnoiseAll> buffer;
@@ -132,9 +132,6 @@ void spectrum(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
 
   fft_1D_real(Ndata);
 
-  // bkspectrum only stores the non-redundant r2c half (k in [0,NLnoise/2]);
-  // interior k-planes represent a conjugate pair and are weighted x2, while
-  // the self-conjugate k=0/k=NLnoise/2 planes already cover every (i,j) once.
   for (int i = 0; i < NLnoise; i++) {
     int nxt = (i<=NLnoise/2 ? i : i-NLnoise);
     for (int j = 0; j < NLnoise; j++) {
@@ -179,12 +176,10 @@ void weight(int seed) {
 
 // Calculate mu2
 void mu2(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
-  std::string NLfilename = std::to_string(NLnoise) + std::string("_") + std::to_string(NFIELDS) + std::string("_") + std::to_string(noisefiledirNo);
-  std::string InterFileName = NLfilename + std::string("_") + std::to_string(0);
-  std::string SigmaFileName = std::string("_") + std::to_string(int(calPzeta0));
+  std::string FileName = SimFileName(noisefiledirNo, 0);
 
-  mu2file.open(mu2fileprefix + InterFileName + SigmaFileName + std::string(".bin"), std::ios::binary);
-  k3file.open(k3fileprefix + InterFileName + SigmaFileName + std::string(".bin"), std::ios::binary);
+  mu2file.open(mu2fileprefix + FileName + std::string(".bin"), std::ios::binary);
+  k3file.open(k3fileprefix + FileName + std::string(".bin"), std::ios::binary);
   mu2file << std::setprecision(10);
   k3file << std::setprecision(10);
 
@@ -213,7 +208,7 @@ void mu2(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
 // Calculate compaction function
 void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   prbfile.open(prbfileprefix + std::string(".dat"), std::ios::app);
-  cmpfile.open(cmpfileprefix + std::to_string(NLnoise) + std::string("_") + std::to_string(noisefiledirNo) + std::to_string(int(100*sigma)) + std::string(".dat"));
+  cmpfile.open(cmpfileprefix + SimFileName(noisefiledirNo, 0) + std::string(".dat"));
   prbfile << std::setprecision(10);
   cmpfile << std::setprecision(10);
   
@@ -229,32 +224,25 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
     Ndata[n] -= Naverage;
   }
 
-  // Find the centering point: the bias field (biaslist1D) is built to peak
-  // at index (0,0,0), so that's the natural center for the radial profile
-  // below, but a given noise realization can shift Ndata's actual peak by
-  // a few lattice sites. Search a small neighborhood around the origin
-  // (not the whole box -- a global argmax risks locking onto an unrelated
-  // fluctuation elsewhere in the lattice) and use whichever offset there
-  // maximizes Ndata.
   int xmax = 0, ymax = 0, zmax = 0;
-  {
-    constexpr int centerSearchRadius = 5; // lattice units; tune to taste
-    double bestVal = Ndata[0];
-    for (int dx = -centerSearchRadius; dx <= centerSearchRadius; dx++) {
-      int nx = ((dx % NLnoise) + NLnoise) % NLnoise;
-      for (int dy = -centerSearchRadius; dy <= centerSearchRadius; dy++) {
-        int ny = ((dy % NLnoise) + NLnoise) % NLnoise;
-        for (int dz = -centerSearchRadius; dz <= centerSearchRadius; dz++) {
-          int nz = ((dz % NLnoise) + NLnoise) % NLnoise;
-          double val = Ndata[nx*NLnoise*NLnoise + ny*NLnoise + nz];
-          if (val > bestVal) {
-            bestVal = val;
-            xmax = dx; ymax = dy; zmax = dz;
-          }
-        }
-      }
-    }
-  }
+  // {
+  //   constexpr int centerSearchRadius = 5; // lattice units; tune to taste
+  //   double bestVal = Ndata[0];
+  //   for (int dx = -centerSearchRadius; dx <= centerSearchRadius; dx++) {
+  //     int nx = ((dx % NLnoise) + NLnoise) % NLnoise;
+  //     for (int dy = -centerSearchRadius; dy <= centerSearchRadius; dy++) {
+  //       int ny = ((dy % NLnoise) + NLnoise) % NLnoise;
+  //       for (int dz = -centerSearchRadius; dz <= centerSearchRadius; dz++) {
+  //         int nz = ((dz % NLnoise) + NLnoise) % NLnoise;
+  //         double val = Ndata[nx*NLnoise*NLnoise + ny*NLnoise + nz];
+  //         if (val > bestVal) {
+  //           bestVal = val;
+  //           xmax = dx; ymax = dy; zmax = dz;
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 
   // radial profile
   for (size_t i=0; i<NLnoiseAll; i++) {

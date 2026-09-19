@@ -1,13 +1,5 @@
 #!/bin/bash
 
-# ---------------------------------------------------------------------------
-# pjsub batch script for Fugaku (Fujitsu A64FX, 1 node / 48 cores, OpenMP only
-# -- no MPI, so a single node is all this job can use).
-#
-# Submit with:
-#   pjsub bstolas_fugaku.sh
-# ---------------------------------------------------------------------------
-
 #PJM -L "node=1"
 #PJM -L "rscgrp=int"
 #PJM -L "elapse=05:00:00"
@@ -17,19 +9,9 @@
 #PJM -S
 #PJM -o job_out
 
-# Match the module used to build STOLAS with Makefile.fugaku.
 module load lang/tcsds-1.2.43
 
-# A64FX has 48 usable compute cores per node (assistant cores are reserved by
-# the OS and excluded automatically).
 export OMP_NUM_THREADS=48
-
-# For the FFTW thread-count sweep diagnostic, use bstolas_fugaku_sweep.sh
-# instead (a separate script, not a flag/env-var on this one): pjsub
-# --interact doesn't reliably forward the submitting shell's environment
-# variables or extra positional arguments into the job's own environment,
-# so a conditional block here (`if [ "$SWEEP" = 1 ]`) silently fell through
-# to the normal run below instead of triggering.
 
 MODEL=$(grep '^#define MODEL' model.hpp | awk '{print $3}')
 
