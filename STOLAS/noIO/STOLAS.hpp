@@ -96,7 +96,11 @@ std::array<double,NLnoise/2> dzetar{};
   const int ndiv  = (int)divdN;
 #endif
 
+#ifdef USE_SSL2
+#include "src/noise_bias_ssl2.hpp"
+#else
 #include "src/noise_bias.hpp"
+#endif
 #include "src/zoom.hpp"
 #include "src/laplacian.hpp"
 #include "src/output.hpp"

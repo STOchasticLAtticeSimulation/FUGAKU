@@ -28,6 +28,7 @@ int main(int argc, char* argv[])
 
   init_fftw_global();
   if(FFTwisdomFirst) return 0;
+
   int seed_val = atoi(argv[1]);
   std::mt19937 engine_int(seed_val);
 

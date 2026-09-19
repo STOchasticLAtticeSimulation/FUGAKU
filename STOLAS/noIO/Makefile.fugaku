@@ -1,0 +1,40 @@
+MODEL = STOLAS
+FUNC = functions
+
+# Fugaku (Fujitsu A64FX). Load the compiler module first:
+#   module load lang/tcsds-1.2.43
+
+CXX := FCCpx
+CXXSTD := -std=c++2a
+# -SSL2 links Fujitsu C-SSL II (auto-selects the SVE build, libssl2mtsve.a,
+# because -mcpu=a64fx is also present at link time); -DUSE_SSL2 switches
+# dwlist_gen/biaslist1D (src/noise_bias_ssl2.hpp) to call it instead of
+# FFTW, which has no SVE/NEON codelets for double precision on this system.
+CXXFLAGS := -Nclang $(CXXSTD) -Ofast -fopenmp -mcpu=a64fx -msve-vector-bits=512 -flto -funroll-loops -DUSE_SSL2 -SSL2
+
+# FFTW is still needed for fft_1D_real (spectrum(), called once at the end
+# of a run -- not worth moving to SSL2). Override with FFTW_ROOT=... if
+# your tcsds module lines up with the 4.12.0 build instead.
+FFTW_ROOT  ?= $(shell spack location -i fftw arch=linux-rhel8-a64fx %fj@4.12.1 2>/dev/null)
+BOOST_ROOT ?= $(shell spack find --format '{prefix}' 'boost@1.86.0 arch=linux-rhel8-a64fx %fj@4.12.1' 2>/dev/null | head -n1)
+
+ifeq ($(strip $(FFTW_ROOT)),)
+$(error FFTW_ROOT is empty. Run `spack find fftw` and pass it explicitly, e.g. make -f Makefile.fugaku FFTW_ROOT=$$(spack location -i fftw arch=linux-rhel8-a64fx %fj@4.12.0))
+endif
+ifeq ($(strip $(BOOST_ROOT)),)
+$(error BOOST_ROOT is empty. Run `spack find boost` and pass it explicitly, e.g. make -f Makefile.fugaku BOOST_ROOT=$$(spack location -i boost@1.86.0))
+endif
+
+CPPFLAGS := -I$(FFTW_ROOT)/include -I$(BOOST_ROOT)/include
+LDFLAGS  := -L$(FFTW_ROOT)/lib -Wl,-rpath,$(FFTW_ROOT)/lib
+LDLIBS   := -lfftw3_threads -lfftw3 -lm
+
+all: $(MODEL)
+
+$(MODEL): $(MODEL).o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+$(MODEL).o: src/array_op.hpp STOLAS.hpp parameters.hpp model.hpp src/fft.hpp src/noise_shell.hpp src/noise_bias.hpp src/noise_bias_ssl2.hpp src/zoom.hpp src/laplacian.hpp src/output.hpp src/simd_rk4.hpp
+
+clean:
+	$(RM) *.o $(MODEL) $(FUNC)
