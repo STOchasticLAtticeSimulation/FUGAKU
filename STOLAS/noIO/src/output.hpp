@@ -127,7 +127,7 @@ void animation(std::array<state_type,NLnoiseAll>& phievol, int NoisefiledirNo, i
 
 // Calculate power spectrum
 void spectrum(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {  
-  powsfile.open(powsfileprefix + std::string(".dat"));//, std::ios::app);
+  powsfile.open(powsfileprefix + std::string(".dat"), std::ios::app);
   powsfile << std::setprecision(10);
 
   fft_1D_real(Ndata);

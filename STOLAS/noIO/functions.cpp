@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
   Ninfile.read(reinterpret_cast<char*>(Ndata.data()), sizeof(double) * NLnoiseAll);
 
   // if(spower) spectrum(Ndata,noisefiledirNo);
-  mu2(Ndata, noisefiledirNo);
+  // mu2(Ndata, noisefiledirNo);
   if(scompaction) compaction(Ndata,noisefiledirNo);
 
 
