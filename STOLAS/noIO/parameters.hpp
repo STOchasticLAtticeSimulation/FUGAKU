@@ -11,7 +11,7 @@ constexpr int NLpower = 6;
 constexpr double dN = 0.001;//*M_LN2; // e-folds step
 constexpr double Nprec = 1e-7; // Precision of e-foldings
 constexpr double dlogn = 0.1; // Width of bin in power spectrum
-constexpr double LL = 1.; // Box size L
+// constexpr double LL = 1.; // Box size L
 
 double nsigmareset = 8.;
 constexpr int aninum = 20; // dividing number for animation
@@ -37,7 +37,7 @@ constexpr bool susrlength = false; // Output the noisemap
 const double nbias = 16.; // wavenumber of the bias
 const double Nbias = log(nbias/sigma); // Time of the bias
 constexpr double dNbias = 0.1; // Variance of the bias
-const double bias = 20.*sqrt(dNbias); // Amplitude of the bias
+const double bias = 25.*sqrt(dNbias); // Amplitude of the bias
 
 // Directory name of saved data, you can change after "make clean" in your terminal.
 const std::string sdatadir = "data";

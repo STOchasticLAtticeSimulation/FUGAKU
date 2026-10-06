@@ -32,7 +32,6 @@ constexpr int NLnoiseHalfAll = NLnoise*NLnoise*NLnoiseHalf;
 const int totalstep = ceil(log((NLnoise/2-1)/sigma)/dN); // Total number of time step with noise
 const int firststep = ceil(log(nsigmareset/sigma)/dN);
 const int itpstep = ceil((log(nsigmareset/sigma)-log(nsigmareset/sigma/2.))/dN);
-constexpr double dx = LL/NLnoise; // Spacing of each lattice
 constexpr double imax_double = LOG2*(NLpower-1) / dlogn;
 constexpr int imax = int(imax_double) + (imax_double > int(imax_double));
 const double inv_sqrt2 = 1./sqrt(2.);
@@ -44,6 +43,10 @@ const double sig3 = sigma*sigma*sigma;
 #include "src/array_op.hpp"
 #include "src/fft.hpp"
 #include "src/util.hpp"
+
+const double Hinit = hubble({PHI_INIT,DPHI_INIT});
+const double LL = 2.*M_PI/Hinit; // Box size L
+const double dx = LL/NLnoise; // Spacing of each lattice
 
 const std::string Nfileprefix = sdatadir + "/" + model + "/Nmap_";
 const std::string fieldfileprefix = sdatadir + "/" + model + "/field_";
