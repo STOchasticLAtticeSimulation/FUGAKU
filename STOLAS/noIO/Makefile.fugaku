@@ -5,14 +5,20 @@ CXX := FCCpx
 CXXSTD := -std=c++2a
 CXXFLAGS := -Nclang $(CXXSTD) -Ofast -fopenmp -mcpu=a64fx -msve-vector-bits=512 -flto -funroll-loops -DUSE_SSL2 -SSL2
 
-FFTW_ROOT  ?= $(shell spack location -i fftw arch=linux-rhel8-a64fx %fj@4.12.1 2>/dev/null)
-BOOST_ROOT ?= $(shell spack find --format '{prefix}' 'boost@1.86.0 arch=linux-rhel8-a64fx %fj@4.12.1' 2>/dev/null | head -n1)
+ifneq ($(MAKECMDGOALS),clean)
+ifndef FFTW_ROOT
+FFTW_ROOT := $(shell spack location -i fftw arch=linux-rhel8-a64fx %fj@4.12.1 2>/dev/null)
+endif
+ifndef BOOST_ROOT
+BOOST_ROOT := $(shell spack find --format '{prefix}' 'boost@1.86.0 arch=linux-rhel8-a64fx %fj@4.12.1' 2>/dev/null | head -n1)
+endif
 
 ifeq ($(strip $(FFTW_ROOT)),)
 $(error FFTW_ROOT is empty. Run `spack find fftw` and pass it explicitly, e.g. make -f Makefile.fugaku FFTW_ROOT=$$(spack location -i fftw arch=linux-rhel8-a64fx %fj@4.12.0))
 endif
 ifeq ($(strip $(BOOST_ROOT)),)
 $(error BOOST_ROOT is empty. Run `spack find boost` and pass it explicitly, e.g. make -f Makefile.fugaku BOOST_ROOT=$$(spack location -i boost@1.86.0))
+endif
 endif
 
 CPPFLAGS := -I$(FFTW_ROOT)/include -I$(BOOST_ROOT)/include

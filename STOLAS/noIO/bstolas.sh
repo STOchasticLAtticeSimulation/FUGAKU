@@ -34,7 +34,7 @@ mkdir -p "$data/$model"
 mkdir -p "$data/$model/animation"
 
 ll=0
-numdata=1
+numdata=100
 for ((i=ll; i<ll+numdata; i++))
 do
 for m in 100.

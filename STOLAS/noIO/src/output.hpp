@@ -205,6 +205,22 @@ void mu2(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   std::cout << "Export k3 map" << std::endl;
 }
 
+// Lattice Laplacian in lattice units (dx=1) at a single point
+double LatticeLaplacianAt(const std::array<double,NLnoiseAll>& x, int i, int j, int k) {
+  return x[index(INCREMENT(i),j,k)] + x[index(DECREMENT(i),j,k)]
+       + x[index(i,INCREMENT(j),k)] + x[index(i,DECREMENT(j),k)]
+       + x[index(i,j,INCREMENT(k))] + x[index(i,j,DECREMENT(k))]
+       - 6.*x[index(i,j,k)];
+}
+
+// Lattice bi-Laplacian in lattice units (dx=1) at a single point
+double LatticeBiLaplacianAt(const std::array<double,NLnoiseAll>& x, int i, int j, int k) {
+  return LatticeLaplacianAt(x,INCREMENT(i),j,k) + LatticeLaplacianAt(x,DECREMENT(i),j,k)
+       + LatticeLaplacianAt(x,i,INCREMENT(j),k) + LatticeLaplacianAt(x,i,DECREMENT(j),k)
+       + LatticeLaplacianAt(x,i,j,INCREMENT(k)) + LatticeLaplacianAt(x,i,j,DECREMENT(k))
+       - 6.*LatticeLaplacianAt(x,i,j,k);
+}
+
 // Calculate compaction function
 void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   prbfile.open(prbfileprefix + std::string(".dat"), std::ios::app);
@@ -305,8 +321,18 @@ void compaction(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
     if(weightbool[n]) logw -= Bias*weightlist[n]*sqrt_dN + (Bias*Bias*dN)/2;
   }
 
-  prbfile << noisefiledirNo << ' ' << logw 
-  << ' ' << CompactionInt << ' ' << CompactionMax << ' ' << Rmax << ' ' << rmax << std::endl;
+  // peak curvature in lattice units: mu2hat = -lap(zeta_pk), k3hat^2 = lap^2(zeta_pk)/(-lap(zeta_pk))
+  int ipk = (xmax+NLnoise)%NLnoise, jpk = (ymax+NLnoise)%NLnoise, kpk = (zmax+NLnoise)%NLnoise;
+  double mu2hat = -LatticeLaplacianAt(Ndata, ipk, jpk, kpk);
+  double k3hat2 = LatticeBiLaplacianAt(Ndata, ipk, jpk, kpk)/mu2hat;
+  double k3hat = (k3hat2 >= 0 ? sqrt(k3hat2) : -sqrt(-k3hat2)); // signed if k3hat^2<0
+
+  double kstar = 2.*M_PI*nbias/NLnoise; // bias wavenumber in lattice units
+  double zetam = zetar[1][(size_t)rmax];
+
+  // seed, mu2hat, k3hat, k_* r_m, zeta_m, Cbar_m, ln W
+  prbfile << noisefiledirNo << ' ' << mu2hat << ' ' << k3hat << ' ' << kstar*rmax
+  << ' ' << zetam << ' ' << CompactionInt << ' ' << logw << std::endl;
   std::cout << "ExportCompactionFunction" << std::endl;
 }
 
