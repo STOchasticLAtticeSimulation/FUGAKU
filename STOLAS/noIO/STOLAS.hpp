@@ -170,9 +170,10 @@ void evolution(int seed, int starttime, int endtime, int InterpolatingNo) {
       state_type phi = phievol[i];
 
       #if MODEL==1
-        double phiamp = sqrt(calPphi(N,phi,N0list[i],brokenlist[i]));
-        double piamp = sqrt(calPpi(N,phi,N0list[i],brokenlist[i]));
+        double calPphival = calPphi(N,phi,N0list[i],brokenlist[i]);
+        double calPpival = calPpi(N,phi,N0list[i],brokenlist[i]);
         double crosscor = RecalPphipi(N,phi,N0list[i],brokenlist[i]);
+        double phiamp = sqrt(calPphival);
       #elif MODEL==2
         double calPphival = calPphi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]);
         double calPpival = calPpi(N,phi,N1list[i],N2list[i],broken1list[i],broken2list[i]);
@@ -199,7 +200,7 @@ void evolution(int seed, int starttime, int endtime, int InterpolatingNo) {
         stepper_noise.do_step(dphidN, phi, N, dN);
       #endif
 
-      #if MODEL==2
+      #if MODEL==2 || MODEL==1
         double dwpi = dwlist[1][i];
 
         double b2 = crosscor*crosscor;
@@ -224,15 +225,6 @@ void evolution(int seed, int starttime, int endtime, int InterpolatingNo) {
         phi[0] += (sqrtlam1*vplus1*biaseddw + sqrtlam2*vminus1*dwpi) * sqrt_dN;
         phi[1] += (sqrtlam1*vplus2*biaseddw + sqrtlam2*vminus2*dwpi) * sqrt_dN;
 
-        // reflective boundary
-        if (phi_old <= phi1 && phi[0] > phi1) {
-          phi[0] = 2.0 * phi1 - phi[0];
-          phi[1] = -phi[1];
-        }
-        if (phi_old <= phi2 && phi[0] > phi2) {
-          phi[0] = 2.0 * phi2 - phi[0];
-          phi[1] = -phi[1];
-        }
       #elif MODEL==3
         NFLOOP{
           phi[2*nf] += phiamp * sqrt_dN * dwlist[nf-1][i];
@@ -242,17 +234,21 @@ void evolution(int seed, int starttime, int endtime, int InterpolatingNo) {
         phi[0] += phiamp * bias * Bias * GaussianFactor * dN;
       #endif
 
+      #if MODEL==2
+        // reflective boundary
+        if (phi_old <= phi1 && phi[0] > phi1) {
+          phi[0] = 2.0 * phi1 - phi[0];
+          phi[1] = -phi[1];
+        }
+        if (phi_old <= phi2 && phi[0] > phi2) {
+          phi[0] = 2.0 * phi2 - phi[0];
+          phi[1] = -phi[1];
+        }
+      #endif
+
       phievol[i] = phi;
 
       #if MODEL==1
-        if (crosscor > 0) {
-          phi[1] += piamp * dw * sqrt_dN;
-          phi[1] += piamp * bias * Bias * GaussianFactor * dN;
-        } else {
-          phi[1] -= piamp * dw * sqrt_dN;
-          phi[1] -= piamp * bias * Bias * GaussianFactor * dN;
-        }
-
         if (!brokenlist[i] && phi[0] < 0) {
           brokenlist[i] = true;
           N0list[i] = N;
@@ -304,7 +300,13 @@ void evolutionNoise(int seed, int averagetime) {
 
     // stepper
     boost::numeric::odeint::runge_kutta4<state_type> stepper_noise;
-    
+
+    #if MODEL==1
+      // local copies: brokenlist/N0list must stay unchanged for the next average
+      bool broken = brokenlist[i];
+      double N0 = N0list[i];
+    #endif
+
     while (EoN(phi)>0) {
       #if MODEL==3
         double psiamp = sqrt(calPpsi(phi));
@@ -350,9 +352,41 @@ void evolutionNoise(int seed, int averagetime) {
         phi[0] += (sqrtlam1*vplus1*dw + sqrtlam2*vminus1*dwpi) * sqrt_dN;
         phi[1] += (sqrtlam1*vplus2*dw + sqrtlam2*vminus2*dwpi) * sqrt_dN;
       #elif MODEL==1
-        double phiamp = sqrt(calPphi(N,phi,N0list[i],brokenlist[i]));
-        double piamp = sqrt(calPpi(N,phi,N0list[i],brokenlist[i]));
-        double crosscor = RecalPphipi(N,phi,N0list[i],brokenlist[i]);
+        double calPphival = calPphi(N,phi,N0,broken);
+        double calPpival = calPpi(N,phi,N0,broken);
+        double crosscor = RecalPphipi(N,phi,N0,broken);
+
+        double Nold = N;
+        stepper_noise.do_step(dphidN, phi, N, dN);
+        N += dN;
+
+        double dw = dist_av(engine_av);
+        double dwpi = dist_av(engine_av);
+
+        double b2 = crosscor*crosscor;
+        double combi1 = sqrt(4.*b2 + pw2(calPphival-calPpival));
+
+        double sqrtlam1 = sqrt(0.5*(calPphival+calPpival + combi1));
+        double eig2 = 0.5*(calPphival+calPpival - combi1);
+        if(eig2 < 1e-14*(calPphival+calPpival)) eig2 = 0.;
+
+        double sqrtlam2 = sqrt(eig2);
+
+        double denomplus = sqrt(4.*b2 + pw2(calPphival-calPpival + combi1));
+        double denomminus = sqrt(4.*b2 + pw2(calPphival-calPpival - combi1));
+
+        double vplus1 = (calPphival-calPpival + combi1)/denomplus;
+        double vplus2 = 2.*crosscor/denomplus;
+        double vminus1 = (calPphival-calPpival - combi1)/denomminus;
+        double vminus2 = 2.*crosscor/denomminus;
+
+        phi[0] += (sqrtlam1*vplus1*dw + sqrtlam2*vminus1*dwpi) * sqrt_dN;
+        phi[1] += (sqrtlam1*vplus2*dw + sqrtlam2*vminus2*dwpi) * sqrt_dN;
+
+        if (!broken && phi[0] < 0) {
+          broken = true;
+          N0 = Nold;
+        }
       #else
         double phiamp = sqrt(calPphi(phi));
         

@@ -6,7 +6,7 @@ extern inline double pw3(double x) {return x*x*x;}
 extern inline double pw4(double x) {return x*x*x*x;}
 
 
-#define MODEL 2 // 0 -> chaotic, 1 -> Starobinsky, 2 -> USR, 3 -> hybrid
+#define MODEL 1 // 0 -> chaotic, 1 -> Starobinsky, 2 -> USR, 3 -> hybrid
 #define NFIELDS 0 // Number of waterfall
 
 #define NFLOOP for (int nf = 1; nf < NFIELDS+1; nf++)
@@ -16,6 +16,8 @@ constexpr int NumFields = 2*NFIELDS+2;
 typedef std::array<double,NumFields> state_type;
 state_type phii{};
 
+// input from bash file
+double calPzeta0 = std::stod(std::getenv("SIGMA"));
 
 #if MODEL==0
 
@@ -70,7 +72,7 @@ inline double EoN(const state_type &phi) {
 const std::string model = "Starobinsky"; // Name of the model
 const double H0 = 1e-5; // Hubble parameter of broken point
 const double calPRIR = 8.5e-10; // Amplitude of curvature perturbation
-const double Lambda = 1700; // Ratio between Ap to Am
+const double Lambda = 1080; // Ratio between Ap to Am
 const double Ap = sqrt(9./4/M_PI/M_PI*H0*H0*H0*H0*H0*H0/calPRIR); // Gradient of the potential at first stage
 const double Am = Ap/Lambda; // Gradient of the potential at second stage
 const double V0 = 3*H0*H0; // Amplitude of flat potential
@@ -100,45 +102,104 @@ double hubble(const state_type &phi) {
   return sqrt((phi[1]*phi[1]/2. + VV(phi))/3.);
 }
 
+
 // Power spectrum of phi
 double calPphi(double &N, const state_type &phi, double N0, bool broken) {
-  if (!broken) {
-    return pow(hubble(phi)/2./M_PI,2);
-  } else {
-    double alpha = exp(N-N0);
-    double alp2 = alpha*alpha;
-    double sig2 = sigma*sigma;
-    double alp3 = alpha*alpha*alpha;
-    double sig3 = sigma*sigma*sigma;
+  double alpha = exp(N-N0);
+  double alp2 = alpha*alpha;
+  double alp3 = alpha*alpha*alpha;
 
-    return pow(hubble(phi)/2./M_PI,2) *
-      ((1 + sig2)*(9*pow(1 + alp2*sig2,2) - 
-				18*Lambda*pow(1 + alp2*sig2,2) + 
-				pow(Lambda,2)*(9 + 18*alp2*sig2 + 9*alp2*alp2*sig2*sig2 + 
-					       2*alp3*alp3*sig3*sig3)) + 
-	    3*(-3*(1 + (-1 + 4*alpha)*sig2 - (-4 + alpha)*alp3*sig2*sig2 + 
-		   alp2*alp2*sig3*sig3) + Lambda*
-	       (6 + 6*(-1 + 4*alpha)*sig2 + 2*(14 - 5*alpha)*alp3*sig2*sig2 + 
-		2*(5 - 2*alpha)*alp2*alp2*sig3*sig3) + 
-	       pow(Lambda,2)*(-3 + (3 - 12*alpha)*sig2 + alp3*(-16 + 7*alpha)*sig2*sig2 + 
-			      alp2*alp2*(-7 + 4*alpha)*sig3*sig3))*cos(2*(-1 + alpha)*sigma) + 
-	    6*sigma*(-3*pow(-1 + Lambda,2) + alp2*alp2*(3 - 10*Lambda + 7*pow(Lambda,2))*sig2*sig2 - 
-		     3*alpha*pow(-1 + Lambda,2)*(-1 + sig2) - 
-		     alp3*(3 - 7*Lambda + 4*pow(Lambda,2))*sig2*(-1 + sig2) + 
-		     alp2*alp3*(-1 + Lambda)*Lambda*sig2*sig2*(-1 + sig2))*sin(2*sigma - 2*alpha*sigma))/
-      (2.*alp3*alp3*pow(Lambda,2)*sig3*sig3);
+  if (!broken) {
+    return pw2(hubble(phi)/M_PI)*(1 + sig2)/4.;
+  }
+  else {
+    return (pw2(hubble(phi)/(M_PI*alp3*Lambda*sig3))*(3*(Lambda - 1.)*cos(2*(-1 + alpha)*sigma)*
+        (3*(1 + (-1 + 4*alpha)*sig2 - (-4 + alpha)*alp3*sig2*sig2 + alp2*alp2*sig3*sig3) + 
+          Lambda*(-3 + (3 - 12*alpha)*sig2 + (-16 + 7*alpha)*alp3*sig2*sig2 + (-7 + 4*alpha)*alp2*alp2*sig3*sig3)) + 
+       (1 + sig2)*(pw2(Lambda)*(9 + 18*alp2*sig2 + 9*alp2*alp2*sig2*sig2 + 2*alp3*alp3*sig3*sig3) - 
+          18*Lambda*(1 + alp2*sig2)*(1 + alp2*sig2) + 9*(1 + alp2*sig2)*(1 + alp2*sig2)) - 
+       6*(Lambda - 1)*sigma*(-3*(-1 + alpha)*(1 + alpha*sig2 + alp2*sig2 + alp3*sig2*sig2) + 
+          Lambda*(-3 - 3*alpha*(-1 + sig2) - 4*alp3*(-1 + sig2)*sig2 + 7*alp2*alp2*sig2*sig2 + 
+             alp2*alp3*(-1 + sig2)*sig2*sig2))*sin(2*(-1. + alpha)*sigma)))/8.;
   }
 }
 
 // The power spectrum of pi
 double calPpi(double &N, const state_type &phi, double N0, bool broken) {
-  return 0;
+  double alpha = exp(N-N0);
+  double alp2 = alpha*alpha;
+  double alp3 = alpha*alpha*alpha;
+
+  if (!broken) {
+    return pw4(hubble(phi)*sigma)/pw2(2.*M_PI);
+  }
+  else {
+    return (pw4(hubble(phi))/pw2(M_PI*Lambda*sigma*alp3)*(-18*Lambda + 9*pw2(Lambda) + 9 - 36*Lambda*alp2*sig2 + 
+       18*alp2*pw2(Lambda)*sig2 + 18*alp2*sig2 - 18*Lambda*alp2*alp2*sig2*sig2 + 9*alp2*alp2*pw2(Lambda)*sig2*sig2 + 
+       9*alp2*alp2*sig2*sig2 + 3*(Lambda - 1)*cos(2*(-1 + alpha)*sigma)*(-3*Lambda + 3 + 7*Lambda*alp2*alp2*sig2*sig2 - 3*alp2*alp2*sig2*sig2) + 
+       2*alp3*alp3*pw2(Lambda)*sig3*sig3 + 6*alpha*(Lambda - 1)*sigma*
+        (3*(1 + alp2*sig2) + Lambda*(-3 - 4*alp2*sig2 + alp2*alp2*sig2*sig2))*sin(2*(-1 + alpha)*sigma)))/8.;
+  }
 }
 
 // Cross correlation of phi and pi
 double RecalPphipi(double &N, const state_type &phi, double N0, bool broken) {
-  return 1;
+  double alpha = exp(N-N0);
+  double alp2 = alpha*alpha;
+  double alp3 = alpha*alpha*alpha;
+  double prefactor = ((pw3(hubble(phi)*sigma))/(2.*M_PI*M_PI));
+  
+  if (!broken) {
+    return -prefactor*(1./(2.*sigma));
+  }
+  else {
+    return -prefactor*0.25*(1/pw2(alp3*Lambda*sig3)/sigma*(9*pw2(Lambda - 1) + 18*alp2*pw2(Lambda - 1)*sig2 + 9*alp2*alp2*pw2(Lambda - 1)*sig2*sig2 + 
+       2*alp3*alp3*pw2(Lambda)*pw2(sig3) + 3*(Lambda - 1)*(cos(2*(-1 + alpha)*sigma)*
+           (-3*Lambda + 3 + 6*alpha*(-Lambda + 1)*sig2 + ((-8 + 7*alpha)*Lambda - 3*(-2 + alpha))*alp3*sig2*sig2 + 2*Lambda*alp3*alp2*pw2(sig3)) + 
+          sigma*(-3*(-1 + 2*alpha)*(Lambda - 1) + 2*(-4*Lambda + 3)*alp3*sig2 + ((-7 + 2*alpha)*Lambda + 3)*alp2*alp2*sig2*sig2)*
+           sin(2*(-1 + alpha)*sigma))));
+  }
 }
+
+// // Power spectrum of phi
+// double calPphi(double &N, const state_type &phi, double N0, bool broken) {
+//   if (!broken) {
+//     return pow(hubble(phi)/2./M_PI,2);
+//   } else {
+//     double alpha = exp(N-N0);
+//     double alp2 = alpha*alpha;
+//     double sig2 = sigma*sigma;
+//     double alp3 = alpha*alpha*alpha;
+//     double sig3 = sigma*sigma*sigma;
+
+//     return pow(hubble(phi)/2./M_PI,2) *
+//       ((1 + sig2)*(9*pow(1 + alp2*sig2,2) - 
+// 				18*Lambda*pow(1 + alp2*sig2,2) + 
+// 				pow(Lambda,2)*(9 + 18*alp2*sig2 + 9*alp2*alp2*sig2*sig2 + 
+// 					       2*alp3*alp3*sig3*sig3)) + 
+// 	    3*(-3*(1 + (-1 + 4*alpha)*sig2 - (-4 + alpha)*alp3*sig2*sig2 + 
+// 		   alp2*alp2*sig3*sig3) + Lambda*
+// 	       (6 + 6*(-1 + 4*alpha)*sig2 + 2*(14 - 5*alpha)*alp3*sig2*sig2 + 
+// 		2*(5 - 2*alpha)*alp2*alp2*sig3*sig3) + 
+// 	       pow(Lambda,2)*(-3 + (3 - 12*alpha)*sig2 + alp3*(-16 + 7*alpha)*sig2*sig2 + 
+// 			      alp2*alp2*(-7 + 4*alpha)*sig3*sig3))*cos(2*(-1 + alpha)*sigma) + 
+// 	    6*sigma*(-3*pow(-1 + Lambda,2) + alp2*alp2*(3 - 10*Lambda + 7*pow(Lambda,2))*sig2*sig2 - 
+// 		     3*alpha*pow(-1 + Lambda,2)*(-1 + sig2) - 
+// 		     alp3*(3 - 7*Lambda + 4*pow(Lambda,2))*sig2*(-1 + sig2) + 
+// 		     alp2*alp3*(-1 + Lambda)*Lambda*sig2*sig2*(-1 + sig2))*sin(2*sigma - 2*alpha*sigma))/
+//       (2.*alp3*alp3*pow(Lambda,2)*sig3*sig3);
+//   }
+// }
+
+// // The power spectrum of pi
+// double calPpi(double &N, const state_type &phi, double N0, bool broken) {
+//   return 0;
+// }
+
+// // Cross correlation of phi and pi
+// double RecalPphipi(double &N, const state_type &phi, double N0, bool broken) {
+//   return 1;
+// }
 
 // The condition at the end of inflation
 inline double EoI(const state_type &phi) {
@@ -151,8 +212,6 @@ inline double EoN(const state_type &phi) {
 
 
 #elif MODEL==2
-
-double calPzeta0 = std::stod(std::getenv("SIGMA"));
 
 // Model parameters
 const std::string model = "USR"; // Name of the model
