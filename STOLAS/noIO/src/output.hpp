@@ -175,7 +175,7 @@ void weight(int seed) {
 }
 
 // Calculate mu2
-void mu2(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
+void ComputeLaplacian(std::array<double,NLnoiseAll>& Ndata, int noisefiledirNo) {
   std::string FileName = SimFileName(noisefiledirNo, 0);
 
   mu2file.open(mu2fileprefix + FileName + std::string(".bin"), std::ios::binary);
