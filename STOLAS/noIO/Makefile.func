@@ -1,0 +1,19 @@
+FUNC = functions
+
+CXX := g++
+
+CXXFLAGS := -std=c++26 -O3 -Xpreprocessor -fopenmp -march=native -ffast-math -flto -funroll-loops
+CPPFLAGS := -I/opt/homebrew/opt/libomp/include -I/opt/homebrew/opt/boost/include
+
+LDFLAGS := -L/opt/homebrew/opt/libomp/lib
+LDLIBS := -lfftw3_threads -lfftw3 -lm -lomp
+
+all: $(FUNC)
+
+$(FUNC): $(FUNC).o
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+$(FUNC).o: src/array_op.hpp STOLAS.hpp parameters.hpp model.hpp src/fft.hpp src/noise_bias.hpp src/zoom.hpp src/laplacian.hpp src/output.hpp
+
+clean:
+	$(RM) $(FUNC).o $(FUNC)
